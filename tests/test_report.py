@@ -68,7 +68,8 @@ def test_tonight_only_lists_active_players_whose_team_plays(built):
 
 def test_free_agents_exclude_owned_players(built):
     roster, _, data = built
-    owned_names = {s.name for p in roster.poolers for s in p.players if s.dropped_on is None}
+    # owned on the report date (a player added later, e.g. Jamie Benn on Oct 31, is still a free agent on Oct 28)
+    owned_names = {s.name for p in roster.poolers for s in p.players if s.counts_on(TODAY)}
     assert data["deals"] and all(d["player"] not in owned_names for d in data["deals"])
     pts = [d["pts"] for d in data["deals"]]
     assert pts == sorted(pts, reverse=True)
@@ -120,7 +121,7 @@ def test_drop_day_points_go_to_nobody_on_the_team_sheet():
 def test_page_has_the_team_card(built):
     _, _, data = built
     page = render(data)
-    assert "L\\u2019alignement" in page and "openTeam" in page and "#equipe" in page
+    assert "L’alignement" in page and "openTeam" in page and "#equipe" in page
 
 
 def test_page_loads_nothing_from_other_sites(built, tmp_path):

@@ -242,7 +242,7 @@ window.DATA = __DATA__;
       add(r, rk, ini, nm, spark(p.spark, p.color), tot);
       list.appendChild(r);
     });
-    add(s, list, el('p', 'small', 'Touche un pooler pour voir son alignement, ses joueurs partis et ses mouvements.'), el('p', 'small', 'Courbes :derniers jours de match. Prévisions : total actuel projeté sur ' + M.seasonGames + ' matchs, donc approximatives en début de saison.'));
+    add(s, list, el('p', 'small', 'Touche un pooler pour voir son alignement, ses joueurs partis et ses mouvements.'), el('p', 'small', 'Courbes : derniers jours de match. Prévisions : total actuel projeté sur ' + M.seasonGames + ' matchs, donc approximatives en début de saison.'));
     return s;
   }
 
