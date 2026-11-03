@@ -1,4 +1,5 @@
-"""Preview of a data-dense, "advanced stats" look for the report (published at /apercu/). Same data as render.py.
+"""The report page (main design since 2026-11-03): data-dense "advanced stats" look. The previous design (render.py)
+is still built at /classique/ as a fallback.
 
 Inspired by stats-hub layouts (stat tiles with pool rank and average, percentile bars, sortable leaderboards,
 trend chart, head-to-head). Own colours and wording; no league logos, marks or images.
@@ -173,6 +174,7 @@ window.DATA = __DATA__;
     var rm = D.recentMoves || [];
     if (rm.length) { var names = []; rm.forEach(function (m) { if (names.indexOf(m.name) < 0) names.push(m.name); }); var b = el('button', 'link', 'Mouvements récents : ' + names.join(', ') + ' ›'); b.onclick = function () { open(rm[0].id); }; add(s, b); }
     if (M.missingGames) add(s, el('p', 'alert', M.missingGames + ' match(s) non chargé(s) : points possiblement incomplets.'));
+    if (M.unresolved && M.unresolved.length) add(s, el('p', 'alert', 'Joueur non reconnu, points possiblement incomplets : ' + M.unresolved.join(', ') + '.'));
     add(s, el('p', 'small', 'Mis à jour le ' + M.updated + '.'));
     return s;
   }

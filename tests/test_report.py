@@ -163,6 +163,19 @@ def test_tiles_trend_and_preview_page(built):
     assert page.count("</script>") == 1 and "url(fonts/barlow-400.woff2)" in page and "googleapis" not in page
 
 
+def test_build_writes_new_main_page_classic_fallback_and_redirect(tmp_path):
+    from pool.__main__ import main
+    out = tmp_path / "site"
+    assert main(["build", "--demo", "--today", "2026-10-28", "--roster", os.path.join(ROOT, "roster.json"),
+                 "--out", str(out), "--classic", str(out / "classique")]) == 0
+    assert "Pool <b>LNH</b> · Analyse" in (out / "index.html").read_text(encoding="utf-8")
+    assert "Ma soirée" in (out / "classique" / "index.html").read_text(encoding="utf-8")
+    assert 'url=../' in (out / "apercu" / "index.html").read_text(encoding="utf-8")
+    for d in (out, out / "classique"):
+        assert (d / "fonts" / "barlow-400.woff2").exists()
+    assert json.loads((out / "data.json").read_text(encoding="utf-8"))["meta"]["demo"] is True
+
+
 def test_page_embeds_data_safely(built):
     _, _, data = built
     page = render(data)

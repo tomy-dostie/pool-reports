@@ -8,6 +8,10 @@ from datetime import date, timedelta
 from .engine import load_roster, norm, score_day
 from .nhl import NhlClient
 from .render import copy_static, render
+from .render_edge import render_edge
+
+REDIRECT = ('<!doctype html><meta charset="utf-8"><meta name="referrer" content="no-referrer">'
+            '<meta http-equiv="refresh" content="0; url=../"><title>Pool LNH</title><a href="../">Pool LNH</a>')
 from .report import build_report, collect, now_toronto
 
 
@@ -20,7 +24,7 @@ def main(argv=None):
     b.add_argument("--cache", default="cache")
     b.add_argument("--today", help="YYYY-MM-DD (default: today in Toronto)")
     b.add_argument("--demo", action="store_true", help="synthetic data, no network")
-    b.add_argument("--preview", help="also write the advanced-stats preview page to this folder")
+    b.add_argument("--classic", help="also write the previous page design to this folder (fallback)")
     c = sub.add_parser("check", help="compare with PoolExpert numbers")
     c.add_argument("--roster", default="roster.json")
     c.add_argument("--expected", default="expected.json")
@@ -37,13 +41,15 @@ def main(argv=None):
             client = NhlClient(a.cache)
         data = build_report(roster, client, today, demo=a.demo, url=os.environ.get("REPORT_URL", ""))
         os.makedirs(a.out, exist_ok=True)
-        open(os.path.join(a.out, "index.html"), "w", encoding="utf-8").write(render(data))
+        open(os.path.join(a.out, "index.html"), "w", encoding="utf-8").write(render_edge(data))
         copy_static(a.out)
-        if a.preview:
-            from .render_edge import render_edge
-            os.makedirs(a.preview, exist_ok=True)
-            open(os.path.join(a.preview, "index.html"), "w", encoding="utf-8").write(render_edge(data))
-            copy_static(a.preview)
+        # the design was previewed at /apercu/: keep that link working
+        os.makedirs(os.path.join(a.out, "apercu"), exist_ok=True)
+        open(os.path.join(a.out, "apercu", "index.html"), "w", encoding="utf-8").write(REDIRECT)
+        if a.classic:
+            os.makedirs(a.classic, exist_ok=True)
+            open(os.path.join(a.classic, "index.html"), "w", encoding="utf-8").write(render(data))
+            copy_static(a.classic)
         json.dump(data, open(os.path.join(a.out, "data.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         open(os.path.join(a.out, "summary.txt"), "w", encoding="utf-8").write(data["summary"])
         for w in data["warnings"]:
