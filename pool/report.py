@@ -1,16 +1,22 @@
 """Builds the report data (all the numbers and the French text) for one morning."""
 import statistics
 from collections import defaultdict
+from dataclasses import replace
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from .engine import score_day, standings, validate
+from .engine import find_line, score_day, standings, validate
 from .nhl import TEAM_CODES, resolve_ids
 
 TORONTO = ZoneInfo("America/Toronto")
 COLORS = ["#FFB84D", "#5EB6FF", "#4FD1A5", "#FF8FC7", "#A99BFF", "#D0D6E4", "#FF8A6B", "#C6E86B", "#5ED6D6", "#FFD0A0"]
 DAYS_FR = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 MONTHS_FR = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
+MONTHS_SHORT_FR = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."]
+
+
+def _short(d):
+    return f"{d.day} {MONTHS_SHORT_FR[d.month - 1]}"
 
 
 def now_toronto():
@@ -59,6 +65,55 @@ def collect(client, start, through, game_types=(2,), failures=None):
         games_by_day[d] = games
         d += timedelta(days=1)
     return lines_by_day, games_by_day
+
+
+def team_sheet(pooler, roster, lines_by_day, game_days, last_day, directory, today):
+    """Every stint of one pooler with the stats earned while owned: (team, former, moves).
+
+    Uses the same matching (find_line) and dates (counts_on) as the engine, so team + former points
+    add up to the pooler's total in the standings. Moves dated after `today` are not shown yet."""
+    week_start = last_day - timedelta(days=6)
+    rows = []
+    for s in pooler.players:
+        if s.added_on > today:
+            continue
+        if s.dropped_on is not None and s.dropped_on > today:
+            s = replace(s, dropped_on=None)
+        gp = g = a = pts = last7 = 0
+        for d in game_days:
+            if d > last_day or not s.counts_on(d):
+                continue
+            l = find_line(s, lines_by_day[d], [])      # unmatched names were already warned about by score_day
+            if l is None:
+                continue
+            p = l.goals * roster.goal_points + l.assists * roster.assist_points
+            gp, g, a, pts = gp + 1, g + l.goals, a + l.assists, pts + p
+            if d >= week_start:
+                last7 += p
+        dp = directory.get(s.player_id)
+        rows.append((s, {"player": dp.name if dp else s.name, "team": dp.team if dp else s.team,
+                         "pos": "Déf" if s.position == "D" else "Att", "gp": gp, "g": g, "a": a, "pts": pts, "last7": last7}))
+
+    team = sorted((r for s, r in rows if s.dropped_on is None), key=lambda r: (-r["pts"], -r["gp"], r["player"]))
+    former = sorted(({**r, "until": _short(s.dropped_on - timedelta(days=1)), "_d": s.dropped_on}
+                     for s, r in rows if s.dropped_on is not None), key=lambda r: (r["_d"], r["player"]), reverse=True)
+    for r in former:
+        del r["_d"]
+
+    # a move = a drop and an add on the same date (several on one date are paired in roster order)
+    moves, adds = [], [(s, r) for s, r in rows if s.added_on > roster.start_date]
+    for s, r in rows:
+        if s.dropped_on is None:
+            continue
+        j = next((k for k, (t, _) in enumerate(adds) if t.added_on == s.dropped_on), None)
+        new = adds.pop(j)[1] if j is not None else None
+        moves.append({"date": s.dropped_on.isoformat(), "dateLabel": _short(s.dropped_on), "out": r["player"], "outPts": r["pts"],
+                      "in": new["player"] if new else None, "inPts": new["pts"] if new else None})
+    for t, r in adds:
+        moves.append({"date": t.added_on.isoformat(), "dateLabel": _short(t.added_on), "out": None, "outPts": None,
+                      "in": r["player"], "inPts": r["pts"]})
+    moves.sort(key=lambda m: m["date"], reverse=True)
+    return team, former, moves
 
 
 def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
@@ -126,12 +181,15 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
         tonight.sort(key=lambda x: (x["_sort"], x["player"]))
         for t in tonight:
             del t["_sort"]
+        sheet, former, moves = team_sheet(p, roster, lines_by_day, game_days, last_day, directory, today)
+        if sum(r["pts"] for r in sheet + former) != total:
+            warnings.append(f"{p.name}: team sheet adds up to {sum(r['pts'] for r in sheet + former)} pts, standings say {total} (check roster dates)")
         poolers.append({
             "id": p.id, "name": p.name, "initials": p.name[:2].upper(), "color": COLORS[i % len(COLORS)],
             "rank": rank, "move": move, "total": total, "yday": yday, "gap": leader_total - total,
             "proj": round(total * roster.season_games / gp_median) if gp_median else total,
             "spark": [cum[p.id].get(d, 0) for d in spark_days],
-            "scorers": scorers, "tonight": tonight,
+            "scorers": scorers, "tonight": tonight, "team": sheet, "former": former, "moves": moves,
         })
     poolers.sort(key=lambda x: (x["rank"], x["name"]))
 
@@ -234,8 +292,13 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
         chatter.append({"tag": "Remontée", "good": True, "name": top_mover["name"], "color": top_mover["color"], "text": f"{top_mover['name']} gagne {top_mover['move']} rangs en une soirée."})
     chatter = chatter[:4]
 
+    since = (today - timedelta(days=7)).isoformat()
+    recent_moves = [{"id": p["id"], "name": p["name"], "color": p["color"], "date": m["date"]}
+                    for p in poolers for m in p["moves"] if m["date"] >= since]
+    recent_moves.sort(key=lambda m: (m["date"], m["name"]), reverse=True)
+
     t = now_toronto()
-    summary = [f"Pool de la LNH : rapport du {today.day} {MONTHS_FR[today.month - 1]}"]
+    summary =[f"Pool de la LNH : rapport du {today.day} {MONTHS_FR[today.month - 1]}"]
     for p in poolers:
         mv = f" ({'+' if p['move'] > 0 else ''}{p['move']})" if p["move"] else ""
         summary.append(f"{p['rank']}. {p['name']} : {p['total']} pts (+{p['yday']}){mv}")
@@ -252,5 +315,5 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
             "unresolved": [u.split("'")[1] for u in unresolved if "'" in u],
         },
         "headline": headline, "tiles": tiles, "poolers": poolers, "deals": deals, "cold": cold,
-        "awards": awards, "chatter": chatter, "summary": "\n".join(summary), "warnings": sorted(set(warnings)),
+        "awards": awards, "chatter": chatter, "recentMoves": recent_moves, "summary":"\n".join(summary), "warnings": sorted(set(warnings)),
     }
