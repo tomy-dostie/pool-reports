@@ -1,5 +1,7 @@
 """Turns the report data into one self-contained mobile web page (swipeable cards, French)."""
 import json
+import os
+import shutil
 
 TEMPLATE = r"""<!doctype html>
 <html lang="fr-CA">
@@ -7,10 +9,11 @@ TEMPLATE = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0B1020">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <title>Pool de la LNH : rapport du jour</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+__FONTS__
 :root{--bg:#0B1020;--surface:#141B2E;--line:#232C45;--text:#F2F6FF;--muted:#98A4C2;--accent:#D6F0FF;--warm:#FF8A6B;--ink:#0B1020}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Barlow',system-ui,sans-serif;-webkit-text-size-adjust:100%}
@@ -330,6 +333,26 @@ window.DATA = __DATA__;
 """
 
 
+FONT_DIR = os.path.join(os.path.dirname(__file__), "static", "fonts")
+# Fonts are served from the site itself (no Google Fonts request, so visitors are not tracked). SIL OFL, see OFL.txt.
+FONTS = [("Barlow", 400, "barlow-400"), ("Barlow", 500, "barlow-500"), ("Barlow", 600, "barlow-600"),
+         ("Barlow Condensed", 600, "barlow-condensed-600"), ("Barlow Condensed", 700, "barlow-condensed-700"),
+         ("Barlow Condensed", 800, "barlow-condensed-800")]
+FONT_CSS = "\n".join(f"@font-face{{font-family:'{fam}';font-weight:{w};font-style:normal;font-display:swap;src:url(fonts/{f}.woff2) format('woff2')}}"
+                     for fam, w, f in FONTS)
+
+
+def copy_static(out):
+    """Copy the font files next to index.html."""
+    dest = os.path.join(out, "fonts")
+    os.makedirs(dest, exist_ok=True)
+    for name in os.listdir(FONT_DIR):
+        shutil.copyfile(os.path.join(FONT_DIR, name), os.path.join(dest, name))
+
+
+def _embed(data):
+    return json.dumps(data, ensure_ascii=False).replace("</", "<\\/").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+
+
 def render(data):
-    payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
-    return TEMPLATE.replace("__DATA__", payload)
+    return TEMPLATE.replace("__FONTS__", FONT_CSS).replace("__DATA__", _embed(data))

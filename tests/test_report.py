@@ -123,6 +123,18 @@ def test_page_has_the_team_card(built):
     assert "L\\u2019alignement" in page and "openTeam" in page and "#equipe" in page
 
 
+def test_page_loads_nothing_from_other_sites(built, tmp_path):
+    from pool.render import copy_static
+    _, _, data = built
+    page = render(data)
+    assert "googleapis" not in page and "gstatic" not in page and "Content-Security-Policy" in page
+    assert not re.search(r"""(src|href)=["']?https?://""", page)
+    copy_static(str(tmp_path))
+    for name in re.findall(r"url\(fonts/([\w-]+\.woff2)\)", page):
+        assert (tmp_path / "fonts" / name).stat().st_size > 1000
+    assert (tmp_path / "fonts" / "OFL.txt").exists()
+
+
 def test_page_embeds_data_safely(built):
     _, _, data = built
     page = render(data)

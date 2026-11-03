@@ -7,7 +7,7 @@ from datetime import date, timedelta
 
 from .engine import load_roster, norm, score_day
 from .nhl import NhlClient
-from .render import render
+from .render import copy_static, render
 from .report import build_report, collect, now_toronto
 
 
@@ -37,6 +37,7 @@ def main(argv=None):
         data = build_report(roster, client, today, demo=a.demo, url=os.environ.get("REPORT_URL", ""))
         os.makedirs(a.out, exist_ok=True)
         open(os.path.join(a.out, "index.html"), "w", encoding="utf-8").write(render(data))
+        copy_static(a.out)
         json.dump(data, open(os.path.join(a.out, "data.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         open(os.path.join(a.out, "summary.txt"), "w", encoding="utf-8").write(data["summary"])
         for w in data["warnings"]:

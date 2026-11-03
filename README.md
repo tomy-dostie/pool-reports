@@ -6,12 +6,10 @@ Every morning a free GitHub server downloads last night's NHL games, applies you
 ## Setup (about 15 minutes, all in the browser)
 
 1. Create a free account at github.com, then **New repository**: name it `pool-lnh`, choose **Public**, leave "Add a README" unchecked.
-2. Unzip this folder on your computer. In the new repository click **uploading an existing file** and drag in
-   everything from the unzipped folder: `pool/`, `tests/`, `roster.json`, `expected.json`, `README.md`, `.gitignore`
-   (do not worry about `workflow-daily.yml` yet). Click **Commit changes**.
-3. Still in the repository: **Add file > Create new file**. In the name box type `.github/workflows/daily.yml`
-   (typing the slashes creates the folders). Open `workflow-daily.yml` from the zip in a text editor, copy everything,
-   paste it into the big box, then **Commit changes**.
+2. Push this folder to the repository (`pool/`, `tests/`, `.github/workflows/daily.yml`, `roster.json`,
+   `expected.json`, `README.md`, `.gitignore`).
+3. GitHub > your picture > **Settings > Emails**: tick **Keep my email addresses private** and
+   **Block command line pushes that expose my email** (the repository is public; commits show the author's email).
 4. **Settings > Pages > Build and deployment > Source: GitHub Actions.**
 5. **Actions** tab > **Rapport quotidien** > **Run workflow**. After about 2 minutes the run turns green.
    Your page is at `https://YOUR-USERNAME.github.io/pool-lnh/`.
@@ -49,6 +47,13 @@ misspelled the run prints a WARNING in the **Build the page** step.
 - Telegram: secrets `TELEGRAM_TOKEN` (from @BotFather) and `TELEGRAM_CHAT` (the chat id).
 - Messenger or WhatsApp cannot be posted to automatically. The last card of the page has a **Copier le résumé**
   button that copies a ready-to-paste text.
+
+## Privacy and security (public repository)
+
+- Never commit passwords, tokens, webhook URLs, emails or phone numbers. Keys go in **Settings > Secrets and
+  variables > Actions** only. `CLAUDE.md`, `.claude/` and `.env` are git-ignored.
+- The page loads nothing from other sites (fonts are in `pool/static/fonts`, SIL Open Font License) and has a strict
+  Content-Security-Policy. Workflow actions are pinned to exact commits; jobs get the minimum permissions.
 
 ## Rules built into the engine
 
