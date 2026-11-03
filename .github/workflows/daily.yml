@@ -1,0 +1,75 @@
+# Rapport quotidien : runs every morning, builds the page and publishes it on GitHub Pages.
+# Save this file in your repository as .github/workflows/daily.yml
+name: Rapport quotidien
+
+on:
+  schedule:
+    - cron: "0 9 * * *"      # 09:00 UTC = 5 h (summer) / 4 h (winter) in Toronto, after the last games end
+  workflow_dispatch:           # lets you start it by hand from the Actions tab
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Finished games never change, so they are kept between runs instead of downloaded again.
+      - uses: actions/cache@v4
+        with:
+          path: cache
+          key: nhl-cache-${{ github.run_id }}
+          restore-keys: nhl-cache-
+
+      - name: Tests
+        continue-on-error: true
+        run: |
+          pip install pytest
+          python -m pytest -q tests
+
+      - name: Compare with the PoolExpert numbers (information only)
+        continue-on-error: true
+        run: python -m pool check
+
+      - name: Build the page
+        env:
+          REPORT_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        run: python -m pool build --out site
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      # Optional: only does something if you added the DISCORD_WEBHOOK or TELEGRAM_* secrets.
+      - name: Post the summary to the group chat
+        if: github.event_name == 'schedule'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT: ${{ secrets.TELEGRAM_CHAT }}
+        run: python -c "from pool.notify import send; print('sent:', send(open('site/summary.txt', encoding='utf-8').read()))"
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
