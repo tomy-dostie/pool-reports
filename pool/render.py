@@ -92,8 +92,8 @@ button:focus-visible{outline:2px solid var(--text);outline-offset:2px}
 window.DATA = __DATA__;
 (function () {
   var D = window.DATA, M = D.meta;
-  var KICKERS = ['Hier en bref', 'Ma soirée', 'L’alignement', 'Classement', 'Agents libres', 'Les prix du jour'];
-  var TEAM = 2;
+  var KICKERS = ['Hier en bref', 'Ma soirée', 'Classement', 'Agents libres', 'Les prix du jour'];
+  var RACE = 2, detail = null;   // detail = id of the pooler whose team is open over the standings
   var idx = 0, me = null;
 
   function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
@@ -146,8 +146,10 @@ window.DATA = __DATA__;
   }
 
   function setMe(id) { me = id; try { localStorage.setItem('pool.me', me); } catch (e) {} }
-  function openTeam(id) { setMe(id); var d = TEAM > idx ? 1 : -1; idx = TEAM; show(d); }
-  function current() { return D.poolers.filter(function (x) { return x.id === me; })[0]; }
+  function openTeam(id) { var d = RACE >= idx ? 1 : -1; detail = id; idx = RACE; show(d); }
+  function closeTeam() { detail = null; show(-1); }
+  function byId(id) { return D.poolers.filter(function (x) { return x.id === id; })[0]; }
+  function current() { return byId(me); }
   function poolerChips() {
     var chips = el('div', 'chips');
     D.poolers.forEach(function (p) {
@@ -164,11 +166,14 @@ window.DATA = __DATA__;
   function pts(n) { return n + ' ' + plural(n, 'pt', 'pts'); }
 
   function team() {
-    var s = el('div', 'stack'), p = current();
-    add(s, el('h1', 'h1 sm', 'L’alignement'), poolerChips());
-    var head = add(el('div', 'row hr'), el('span', 'label', p.name + ' · ' + ordinal(p.rank)), el('span', 'val', String(p.total)));
-    head.lastChild.style.color = p.color;
-    add(s, head);
+    var s = el('div', 'stack'), p = byId(detail);
+    var back = el('button', 'link', '← Classement');
+    back.onclick = closeTeam;
+    var ini = el('div', 'ini', p.initials); ini.style.background = p.color;
+    var head = add(el('div', 'race'), add(el('div', 'rk'), document.createTextNode(String(p.rank))), ini,
+      add(el('div'), el('div', 'name', p.name), el('div', 'small', p.rank === 1 ? 'Au sommet' : 'à ' + p.gap + ' du 1er')), el('span'),
+      add(el('div', 'tot', String(p.total)), el('span', null, p.proj + ' prévus')));
+    add(s, back, el('h1', 'h1 sm', 'L’alignement'), head);
     var list = el('div', 'list');
     (p.team || []).forEach(function (r) {
       var stats = r.team + ' · ' + r.pos + ' · ' + r.gp + ' PJ · ' + r.g + ' B · ' + r.a + ' A';
@@ -234,7 +239,7 @@ window.DATA = __DATA__;
       add(r, rk, ini, nm, spark(p.spark, p.color), tot);
       list.appendChild(r);
     });
-    add(s, list, el('p', 'small', 'Courbes : derniers jours de match. Prévisions : total actuel projeté sur ' + M.seasonGames + ' matchs, donc approximatives en début de saison.'));
+    add(s, list, el('p', 'small', 'Touche un pooler pour voir son alignement, ses joueurs partis et ses mouvements.'), el('p', 'small', 'Courbes :derniers jours de match. Prévisions : total actuel projeté sur ' + M.seasonGames + ' matchs, donc approximatives en début de saison.'));
     return s;
   }
 
@@ -285,14 +290,14 @@ window.DATA = __DATA__;
     return s;
   }
 
-  var BUILD = [cover, mine, team, race, deals, prizes];
+  var BUILD = [cover, mine, race, deals, prizes];
 
   function show(dir, keep) {
     var card = document.getElementById('card');
     card.className = 'card' + (dir && !keep ? ' enter-' + (dir > 0 ? 'next' : 'prev') : '');
     var scroll = keep ? card.scrollTop : 0;
     card.textContent = '';
-    card.appendChild(BUILD[idx]());
+    card.appendChild(detail && idx === RACE ? team() : BUILD[idx]());
     card.scrollTop = scroll;
     document.getElementById('kicker').textContent = KICKERS[idx];
     var pr = document.getElementById('progress'); pr.textContent = '';
@@ -300,21 +305,23 @@ window.DATA = __DATA__;
     document.getElementById('prev').disabled = idx === 0;
     document.getElementById('next').textContent = idx === BUILD.length - 1 ? 'Recommencer' : 'Suivant';
   }
-  function go(step) { var n = idx + step; if (n >= BUILD.length) n = 0; if (n < 0) return; var d = n > idx ? 1 : -1; idx = n; show(n === 0 && step > 0 ? -1 : d); }
+  function go(step) {
+    if (detail) { if (step < 0) return closeTeam(); detail = null; }
+    var n = idx + step; if (n >= BUILD.length) n = 0; if (n < 0) return; var d = n > idx ? 1 : -1; idx = n; show(n === 0 && step > 0 ? -1 : d); }
 
   pickMe();
   document.getElementById('badge').hidden = !M.demo;
   document.getElementById('demo').hidden = !M.demo;
   document.getElementById('prev').onclick = function () { go(-1); };
   document.getElementById('next').onclick = function () { go(1); };
-  document.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight') go(1); else if (e.key === 'ArrowLeft') go(-1); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight') go(1); else if (e.key === 'ArrowLeft') go(-1); else if (e.key === 'Escape' && detail) closeTeam(); });
   var sx = 0, sy = 0, skip = false;
   document.addEventListener('touchstart', function (e) { var t = e.touches[0]; sx = t.clientX; sy = t.clientY; skip = !!(e.target.closest && e.target.closest('.chips')); }, { passive: true });
   document.addEventListener('touchend', function (e) {
     if (skip) return; var t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(dx < 0 ? 1 : -1);
   }, { passive: true });
-  if (location.hash === '#equipe') idx = TEAM;
+  if (location.hash === '#equipe') { idx = RACE; detail = me; }
   show(0);
 })();
 </script>
