@@ -914,6 +914,14 @@
           "position": "F",
           "playerId": null,
           "addedOn": "2026-09-29",
+          "droppedOn": "2026-10-31"
+        },
+        {
+          "name": "Anthony Cirelli",
+          "team": "TBL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-10-31",
           "droppedOn": null
         },
         {
@@ -1198,6 +1206,14 @@
           "position": "F",
           "playerId": null,
           "addedOn": "2026-09-29",
+          "droppedOn": "2026-10-31"
+        },
+        {
+          "name": "Jamie Benn",
+          "team": "DAL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-10-31",
           "droppedOn": null
         },
         {
