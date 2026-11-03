@@ -135,6 +135,33 @@ def test_page_loads_nothing_from_other_sites(built, tmp_path):
     assert (tmp_path / "fonts" / "OFL.txt").exists()
 
 
+def test_league_percentiles_rank_within_position():
+    from pool.report import league_percentiles
+    from pool.engine import Line, Roster
+    days = [date(2026, 10, d) for d in range(1, 6)]
+    lines = {d: [Line(d, 1, "A", "TOR", 1, 1, "F"), Line(d, 2, "B", "TOR", 1, 0, "F"), Line(d, 3, "C", "TOR", 0, 0, "F"),
+                 Line(d, 4, "D", "TOR", 0, 1, "D"), Line(d, 5, "G", "TOR", 0, 1, "G")] for d in days}
+    lines[days[0]].append(Line(days[0], 6, "Rookie", "MTL", 3, 0, "F"))      # 1 game: not ranked
+    out = league_percentiles(lines, days, Roster([]))
+    assert set(out) == {1, 2, 3, 4}                                          # no goalie, no 1-game player
+    assert out[1] == (2.0, 83) and out[2] == (1.0, 50) and out[3] == (0.0, 17)
+    assert out[4] == (1.0, 50)                                               # alone among defensemen
+
+
+def test_tiles_trend_and_preview_page(built):
+    from pool.render_edge import render_edge
+    _, _, data = built
+    n = len(data["poolers"])
+    for p in data["poolers"]:
+        assert p["trend"][-1] == p["total"] and len(p["trend"]) == len(data["trendDays"])
+        assert set(p["kpi"]) == {"total", "yday", "last7", "proj"} and p["kpi"]["total"]["rank"] == p["rank"]
+        assert all(1 <= k["rank"] <= n for k in p["kpi"].values()) and 0 <= p["last7"] <= p["total"]
+        assert all(r["pct"] is None or 1 <= r["pct"] <= 99 for r in p["team"])
+    assert any(r["pct"] is not None for p in data["poolers"] for r in p["team"])
+    page = render_edge(data)
+    assert page.count("</script>") == 1 and "url(fonts/barlow-400.woff2)" in page and "googleapis" not in page
+
+
 def test_page_embeds_data_safely(built):
     _, _, data = built
     page = render(data)

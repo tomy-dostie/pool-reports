@@ -1,5 +1,6 @@
 """Builds the report data (all the numbers and the French text) for one morning."""
 import statistics
+from bisect import bisect_left, bisect_right
 from collections import defaultdict
 from dataclasses import replace
 from datetime import date, datetime, timedelta
@@ -44,7 +45,8 @@ def _clock(start_utc):
 def _names(names, limit=3):
     if len(names) <= limit:
         return ", ".join(names)
-    return ", ".join(names[:limit]) + f" et {len(names) - limit} autres"
+    rest = len(names) - limit
+    return ", ".join(names[:limit]) + f" et {rest} {_plural(rest, 'autre', 'autres')}"
 
 
 def collect(client, start, through, game_types=(2,), failures=None):
@@ -67,7 +69,7 @@ def collect(client, start, through, game_types=(2,), failures=None):
     return lines_by_day, games_by_day
 
 
-def team_sheet(pooler, roster, lines_by_day, game_days, last_day, directory, today):
+def team_sheet(pooler, roster, lines_by_day, game_days, last_day, directory, today, league=None):
     """Every stint of one pooler with the stats earned while owned: (team, former, moves).
 
     Uses the same matching (find_line) and dates (counts_on) as the engine, so team + former points
@@ -91,8 +93,10 @@ def team_sheet(pooler, roster, lines_by_day, game_days, last_day, directory, tod
             if d >= week_start:
                 last7 += p
         dp = directory.get(s.player_id)
+        ppg, pct = (league or {}).get(s.player_id, (None, None))
         rows.append((s, {"player": dp.name if dp else s.name, "team": dp.team if dp else s.team,
-                         "pos": "Déf" if s.position == "D" else "Att", "gp": gp, "g": g, "a": a, "pts": pts, "last7": last7}))
+                         "pos": "Déf" if s.position == "D" else "Att", "gp": gp, "g": g, "a": a, "pts": pts, "last7": last7,
+                         "ppg": ppg, "pct": pct}))
 
     team = sorted((r for s, r in rows if s.dropped_on is None), key=lambda r: (-r["pts"], -r["gp"], r["player"]))
     former = sorted(({**r, "until": _short(s.dropped_on - timedelta(days=1)), "_d": s.dropped_on}
@@ -114,6 +118,40 @@ def team_sheet(pooler, roster, lines_by_day, game_days, last_day, directory, tod
                       "in": r["player"], "inPts": r["pts"]})
     moves.sort(key=lambda m: m["date"], reverse=True)
     return team, former, moves
+
+
+MIN_GAMES_FOR_RANK = 5
+
+
+def league_percentiles(lines_by_day, game_days, roster):
+    """{player_id: (points_per_game, percentile)} for every NHL skater with enough games.
+
+    Percentile = share of skaters of the same group (forwards or defensemen) with a lower season points per game,
+    ties counted half. Season-wide (all teams), not only while owned by a pooler."""
+    season = {}
+    for d in game_days:
+        for l in lines_by_day[d]:
+            if l.position == "G":
+                continue
+            s = season.setdefault(l.player_id, [0, 0, "F"])
+            s[0] += 1
+            s[1] += l.goals * roster.goal_points + l.assists * roster.assist_points
+            s[2] = "D" if l.position == "D" else "F"
+    out = {}
+    for group in ("F", "D"):
+        rows = [(pid, v[1] / v[0]) for pid, v in season.items() if v[2] == group and v[0] >= MIN_GAMES_FOR_RANK]
+        values = sorted(x for _, x in rows)
+        n = len(values)
+        for pid, x in rows:
+            lo, hi = bisect_left(values, x), bisect_right(values, x)
+            out[pid] = (round(x, 2), max(1, min(99, round(100 * (lo + (hi - lo) / 2) / n))))
+    return out
+
+
+def _rank_and_avg(values):
+    """values {id: number} -> {id: {"v", "rank", "avg"}}; ties share a rank."""
+    avg = round(sum(values.values()) / len(values), 1) if values else 0
+    return {k: {"v": v, "rank": 1 + sum(1 for x in values.values() if x > v), "avg": avg} for k, v in values.items()}
 
 
 def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
@@ -163,6 +201,10 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
             schedule[g.home] = (g.away, True, g.start_utc)
             schedule[g.away] = (g.home, False, g.start_utc)
 
+    league = league_percentiles(lines_by_day, game_days, roster)
+    trend_days = [d for d in game_days if d <= last_day]
+    last_week = [d for d in trend_days if d > last_day - timedelta(days=7)]
+
     poolers = []
     for i, p in enumerate(roster.poolers):
         rank, _, name, total, yday, move = by_id_row[p.id]
@@ -181,7 +223,7 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
         tonight.sort(key=lambda x: (x["_sort"], x["player"]))
         for t in tonight:
             del t["_sort"]
-        sheet, former, moves = team_sheet(p, roster, lines_by_day, game_days, last_day, directory, today)
+        sheet, former, moves = team_sheet(p, roster, lines_by_day, game_days, last_day, directory, today, league)
         if sum(r["pts"] for r in sheet + former) != total:
             warnings.append(f"{p.name}: team sheet adds up to {sum(r['pts'] for r in sheet + former)} pts, standings say {total} (check roster dates)")
         poolers.append({
@@ -190,8 +232,13 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
             "proj": round(total * roster.season_games / gp_median) if gp_median else total,
             "spark": [cum[p.id].get(d, 0) for d in spark_days],
             "scorers": scorers, "tonight": tonight, "team": sheet, "former": former, "moves": moves,
+            "trend": [cum[p.id].get(d, 0) for d in trend_days], "last7": sum(results[d][p.id][0] for d in last_week),
         })
     poolers.sort(key=lambda x: (x["rank"], x["name"]))
+    # tiles for each pooler: value, rank among the poolers and pool average
+    kpis = {k: _rank_and_avg({p["id"]: p[k] for p in poolers}) for k in ("total", "yday", "last7", "proj")}
+    for p in poolers:
+        p["kpi"] = {k: kpis[k][p["id"]] for k in kpis}
 
     # per-player history for streaks and slumps
     history = defaultdict(list)          # id -> [(date, points, goals, assists, name, team, position)]
@@ -218,7 +265,7 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
         g, a = sum(h[2] for h in recent), sum(h[3] for h in recent)
         team = hist[-1][5]
         meta = f"{team} · série de {streak} matchs" if streak >= 3 else f"{team} · {_ga(g, a)}"
-        deals.append({"player": full_name(pid, hist[-1][4]), "meta": meta, "pts": pts, "hot": streak >= 3, "_s": (-pts, -streak, hist[-1][4])})
+        deals.append({"player": full_name(pid, hist[-1][4]), "meta": meta, "pts": pts, "hot": streak >= 3, "pct": league.get(pid, (None, None))[1], "_s": (-pts, -streak, hist[-1][4])})
     deals.sort(key=lambda x: x["_s"])
     deals = deals[:5]
     for dl in deals:
@@ -315,5 +362,5 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
             "unresolved": [u.split("'")[1] for u in unresolved if "'" in u],
         },
         "headline": headline, "tiles": tiles, "poolers": poolers, "deals": deals, "cold": cold,
-        "awards": awards, "chatter": chatter, "recentMoves": recent_moves, "summary":"\n".join(summary), "warnings": sorted(set(warnings)),
+        "awards": awards, "chatter": chatter, "recentMoves": recent_moves, "trendDays": [_short(d) for d in trend_days], "summary":"\n".join(summary), "warnings": sorted(set(warnings)),
     }

@@ -20,6 +20,7 @@ def main(argv=None):
     b.add_argument("--cache", default="cache")
     b.add_argument("--today", help="YYYY-MM-DD (default: today in Toronto)")
     b.add_argument("--demo", action="store_true", help="synthetic data, no network")
+    b.add_argument("--preview", help="also write the advanced-stats preview page to this folder")
     c = sub.add_parser("check", help="compare with PoolExpert numbers")
     c.add_argument("--roster", default="roster.json")
     c.add_argument("--expected", default="expected.json")
@@ -38,6 +39,11 @@ def main(argv=None):
         os.makedirs(a.out, exist_ok=True)
         open(os.path.join(a.out, "index.html"), "w", encoding="utf-8").write(render(data))
         copy_static(a.out)
+        if a.preview:
+            from .render_edge import render_edge
+            os.makedirs(a.preview, exist_ok=True)
+            open(os.path.join(a.preview, "index.html"), "w", encoding="utf-8").write(render_edge(data))
+            copy_static(a.preview)
         json.dump(data, open(os.path.join(a.out, "data.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         open(os.path.join(a.out, "summary.txt"), "w", encoding="utf-8").write(data["summary"])
         for w in data["warnings"]:

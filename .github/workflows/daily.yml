@@ -61,7 +61,7 @@ jobs:
       - name: Build the page
         env:
           REPORT_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
-        run: python -m pool build --out site
+        run: python -m pool build --out site --preview site/apercu
 
       - name: Keep downloaded games for next time
         if: always()
