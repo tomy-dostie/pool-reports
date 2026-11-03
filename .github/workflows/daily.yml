@@ -29,7 +29,7 @@ jobs:
           python-version: "3.12"
 
       # Finished games never change, so they are kept between runs instead of downloaded again.
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
         with:
           path: cache
           key: nhl-cache-${{ github.run_id }}
@@ -49,6 +49,13 @@ jobs:
         env:
           REPORT_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
         run: python -m pool build --out site
+
+      - name: Keep downloaded games for next time
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: cache
+          key: nhl-cache-${{ github.run_id }}
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

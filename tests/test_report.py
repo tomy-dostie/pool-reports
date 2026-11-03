@@ -87,3 +87,17 @@ def test_page_embeds_data_safely(built):
     assert "window.DATA = {" in page and page.count("</script>") == 1
     evil = dict(data, headline={"title": "</script><b>x", "text": "y"})
     assert render(evil).count("</script>") == 1
+
+
+def test_failed_boxscore_does_not_crash_the_build():
+    import os
+    from pool.engine import load_roster
+    from pool.report import collect
+    from pool.demo import SyntheticClient
+    from datetime import date
+    class Flaky(SyntheticClient):
+        def boxscore(self, game):
+            raise RuntimeError("timeout")
+    fails = []
+    lines, games = collect(Flaky(load_roster(os.path.join(os.path.dirname(__file__), '..', 'roster.json')), date(2026, 10, 28)), date(2026, 10, 20), date(2026, 10, 21), failures=fails)
+    assert fails and all(not v for v in lines.values())

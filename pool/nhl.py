@@ -72,14 +72,14 @@ class NhlClient:
 
     def _fetch(self, path):
         last = None
-        for attempt in range(3):
+        for attempt in range(6):
             try:
                 req = urllib.request.Request(BASE + path, headers={"User-Agent": "pool-reports/1.0"})
-                with urllib.request.urlopen(req, timeout=30) as resp:
+                with urllib.request.urlopen(req, timeout=45) as resp:
                     return json.loads(resp.read().decode("utf-8"))
-            except (urllib.error.URLError, TimeoutError) as e:
+            except (OSError, ValueError) as e:   # timeouts, resets, HTTP errors, truncated JSON
                 last = e
-                time.sleep(2 * (attempt + 1))
+                time.sleep(min(30, 3 * 2 ** attempt))
         raise RuntimeError(f"NHL API request failed: {path}: {last}")
 
     def _cached(self, path, name):

@@ -124,6 +124,7 @@ window.DATA = __DATA__;
     var hero = add(el('div', 'hero'), el('div', 'label', 'La une'), el('div', 't', D.headline.title), el('p', null, D.headline.text));
     hero.querySelector('.label').style.color = 'inherit';
     add(s, el('div', 'spacer'), tiles, hero, el('p', 'small', 'Mis à jour le ' + M.updated + '.'));
+    if (M.missingGames) add(s, el('p', 'alert', 'Attention : ' + M.missingGames + ' match(s) n\u2019ont pas pu être chargés. Les points sont possiblement incomplets, réessaie plus tard.'));
     if (M.unresolved && M.unresolved.length) add(s, el('p', 'alert', 'Attention : joueur non reconnu, points possiblement incomplets : ' + M.unresolved.join(', ') + '.'));
     return s;
   }

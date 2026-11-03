@@ -41,7 +41,7 @@ def _names(names, limit=3):
     return ", ".join(names[:limit]) + f" et {len(names) - limit} autres"
 
 
-def collect(client, start, through, game_types=(2,)):
+def collect(client, start, through, game_types=(2,), failures=None):
     """Finished regular-season games and player lines for every date from start to through."""
     lines_by_day, games_by_day = {}, {}
     d = start
@@ -49,7 +49,12 @@ def collect(client, start, through, game_types=(2,)):
         games = [g for g in client.score(d) if g.is_final and g.date == d and g.game_type in game_types]
         lines = []
         for g in games:
-            lines += client.boxscore(g)
+            try:
+                lines += client.boxscore(g)
+            except RuntimeError as e:   # NHL server hiccup: carry on, the next run retries (nothing is cached)
+                if failures is None:
+                    raise
+                failures.append(f"{g.away} @ {g.home} ({d}): {e}")
         lines_by_day[d] = lines
         games_by_day[d] = games
         d += timedelta(days=1)
@@ -62,15 +67,17 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
     for team in TEAM_CODES:
         for p in client.roster(team):
             directory[p.id] = p
+    failures = []
     notes = []
     unresolved = resolve_ids(roster, list(directory.values()), notes)
     warnings += unresolved + [f"NOTE: {n}" for n in notes]
     full_name = lambda pid, fallback: directory[pid].name if pid in directory else fallback
 
     through = today - timedelta(days=1)
-    lines_by_day, games_by_day = collect(client, roster.start_date, through, game_types)
+    lines_by_day, games_by_day = collect(client, roster.start_date, through, game_types, failures)
     game_days = sorted(d for d, l in lines_by_day.items() if l)
     last_day = game_days[-1] if game_days else through
+    warnings += [f"GAME NOT LOADED: {f}" for f in failures]
     results = {d: score_day(roster, d, lines, warnings) for d, lines in lines_by_day.items()}
 
     rows = standings(roster, results, last_day)
@@ -241,6 +248,7 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
             "weekday": DAYS_FR[today.weekday()], "lastDay": last_day.isoformat(),
             "lastDayLabel": f"{last_day.day} {MONTHS_FR[last_day.month - 1]}", "seasonGames": roster.season_games,
             "updated": f"{t.day} {MONTHS_FR[t.month - 1]} à {t.hour} h {t.minute:02d}", "gamesTonight": len(schedule) // 2,
+            "missingGames": len(failures),
             "unresolved": [u.split("'")[1] for u in unresolved if "'" in u],
         },
         "headline": headline, "tiles": tiles, "poolers": poolers, "deals": deals, "cold": cold,
