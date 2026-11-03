@@ -1,0 +1,312 @@
+{
+  "through": "2026-10-27",
+  "note": "Per-player pool points and games played read from PoolExpert screenshots (rows in 'Courante' plus 'Historique actif/reserve').",
+  "players": [
+    {
+      "pooler": "gab",
+      "name": "Nathan MacKinnon",
+      "points": 21,
+      "games": 12
+    },
+    {
+      "pooler": "gab",
+      "name": "Auston Matthews",
+      "points": 20,
+      "games": 14
+    },
+    {
+      "pooler": "gab",
+      "name": "William Nylander",
+      "points": 19,
+      "games": 14
+    },
+    {
+      "pooler": "gab",
+      "name": "Jackson Blake",
+      "points": 14,
+      "games": 14
+    },
+    {
+      "pooler": "gab",
+      "name": "Jason Robertson",
+      "points": 13,
+      "games": 12
+    },
+    {
+      "pooler": "gab",
+      "name": "Trevor Zegras",
+      "points": 12,
+      "games": 14
+    },
+    {
+      "pooler": "gab",
+      "name": "Lucas Raymond",
+      "points": 11,
+      "games": 12
+    },
+    {
+      "pooler": "gab",
+      "name": "Will Smith",
+      "points": 8,
+      "games": 13
+    },
+    {
+      "pooler": "gab",
+      "name": "Jared McCann",
+      "points": 8,
+      "games": 11
+    },
+    {
+      "pooler": "gab",
+      "name": "Jimmy Snuggerud",
+      "points": 8,
+      "games": 12
+    },
+    {
+      "pooler": "gab",
+      "name": "Juraj Slafkovsky",
+      "points": 8,
+      "games": 12
+    },
+    {
+      "pooler": "gab",
+      "name": "Seth Jarvis",
+      "points": 2,
+      "games": 2
+    },
+    {
+      "pooler": "gab",
+      "name": "Jackson LaCombe",
+      "points": 12,
+      "games": 12
+    },
+    {
+      "pooler": "gab",
+      "name": "Devon Toews",
+      "points": 10,
+      "games": 12
+    },
+    {
+      "pooler": "gab",
+      "name": "Miro Heiskanen",
+      "points": 8,
+      "games": 12
+    },
+    {
+      "pooler": "gab",
+      "name": "Bowen Byram",
+      "points": 1,
+      "games": 6
+    },
+    {
+      "pooler": "gab",
+      "name": "Chris Kreider",
+      "points": 4,
+      "games": 10
+    },
+    {
+      "pooler": "vallee",
+      "name": "Jack Eichel",
+      "points": 20,
+      "games": 14
+    },
+    {
+      "pooler": "vallee",
+      "name": "Leo Carlsson",
+      "points": 15,
+      "games": 12
+    },
+    {
+      "pooler": "vallee",
+      "name": "Kirill Marchenko",
+      "points": 14,
+      "games": 14
+    },
+    {
+      "pooler": "vallee",
+      "name": "Mikko Rantanen",
+      "points": 14,
+      "games": 12
+    },
+    {
+      "pooler": "vallee",
+      "name": "Roope Hintz",
+      "points": 10,
+      "games": 12
+    },
+    {
+      "pooler": "vallee",
+      "name": "Dylan Holloway",
+      "points": 10,
+      "games": 12
+    },
+    {
+      "pooler": "vallee",
+      "name": "Pavel Zacha",
+      "points": 8,
+      "games": 12
+    },
+    {
+      "pooler": "vallee",
+      "name": "Vincent Trocheck",
+      "points": 7,
+      "games": 13
+    },
+    {
+      "pooler": "vallee",
+      "name": "Dylan Larkin",
+      "points": 6,
+      "games": 10
+    },
+    {
+      "pooler": "vallee",
+      "name": "Sam Bennett",
+      "points": 6,
+      "games": 13
+    },
+    {
+      "pooler": "vallee",
+      "name": "Rickard Rakell",
+      "points": 5,
+      "games": 12
+    },
+    {
+      "pooler": "vallee",
+      "name": "Ivar Stenberg",
+      "points": 1,
+      "games": 2
+    },
+    {
+      "pooler": "vallee",
+      "name": "Seth Jones",
+      "points": 15,
+      "games": 13
+    },
+    {
+      "pooler": "vallee",
+      "name": "Roman Josi",
+      "points": 12,
+      "games": 12
+    },
+    {
+      "pooler": "vallee",
+      "name": "Filip Hronek",
+      "points": 10,
+      "games": 14
+    },
+    {
+      "pooler": "vallee",
+      "name": "Zach Werenski",
+      "points": 8,
+      "games": 10
+    },
+    {
+      "pooler": "vallee",
+      "name": "Quinton Byfield",
+      "points": 2,
+      "games": 7
+    },
+    {
+      "pooler": "rej",
+      "name": "Sebastian Aho",
+      "points": 19,
+      "games": 14
+    },
+    {
+      "pooler": "rej",
+      "name": "Mitch Marner",
+      "points": 13,
+      "games": 12
+    },
+    {
+      "pooler": "rej",
+      "name": "Vasily Podkolzin",
+      "points": 13,
+      "games": 12
+    },
+    {
+      "pooler": "rej",
+      "name": "Cole Perfetti",
+      "points": 9,
+      "games": 12
+    },
+    {
+      "pooler": "rej",
+      "name": "JJ Peterka",
+      "points": 9,
+      "games": 13
+    },
+    {
+      "pooler": "rej",
+      "name": "Alex Tuch",
+      "points": 9,
+      "games": 10
+    },
+    {
+      "pooler": "rej",
+      "name": "Evgeni Malkin",
+      "points": 9,
+      "games": 11
+    },
+    {
+      "pooler": "rej",
+      "name": "Mark Scheifele",
+      "points": 8,
+      "games": 12
+    },
+    {
+      "pooler": "rej",
+      "name": "Cutter Gauthier",
+      "points": 7,
+      "games": 11
+    },
+    {
+      "pooler": "rej",
+      "name": "John Tavares",
+      "points": 7,
+      "games": 7
+    },
+    {
+      "pooler": "rej",
+      "name": "Anton Frondell",
+      "points": 6,
+      "games": 12
+    },
+    {
+      "pooler": "rej",
+      "name": "Tom Wilson",
+      "points": 5,
+      "games": 10
+    },
+    {
+      "pooler": "rej",
+      "name": "Quinn Hughes",
+      "points": 18,
+      "games": 14
+    },
+    {
+      "pooler": "rej",
+      "name": "Erik Karlsson",
+      "points": 12,
+      "games": 12
+    },
+    {
+      "pooler": "rej",
+      "name": "Rasmus Andersson",
+      "points": 5,
+      "games": 14
+    },
+    {
+      "pooler": "rej",
+      "name": "Morgan Rielly",
+      "points": 2,
+      "games": 2
+    },
+    {
+      "pooler": "rej",
+      "name": "K'Andre Miller",
+      "points": 4,
+      "games": 12
+    }
+  ]
+}

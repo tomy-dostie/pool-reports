@@ -1,0 +1,1373 @@
+{
+  "season": "2026-2027",
+  "startDate": "2026-09-29",
+  "goalPoints": 1,
+  "assistPoints": 1,
+  "poolers": [
+    {
+      "id": "tomy",
+      "name": "Tomy",
+      "players": [
+        {
+          "name": "Connor McDavid",
+          "team": "EDM",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Kirill Kaprizov",
+          "team": "MIN",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Matthew Tkachuk",
+          "team": "FLA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Alexis Lafrenière",
+          "team": "NYR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Brady Tkachuk",
+          "team": "FLA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Brock Boeser",
+          "team": "VAN",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Tyler Toffoli",
+          "team": "SJ",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Nico Hischier",
+          "team": "NJ",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Jordan Kyrou",
+          "team": "WSH",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Patrick Kane",
+          "team": "CHI",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Robert Thomas",
+          "team": "STL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Dylan Cozens",
+          "team": "OTT",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Matthew Schaefer",
+          "team": "NYI",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Brandon Montour",
+          "team": "SEA",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Moritz Seider",
+          "team": "DET",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Charlie McAvoy",
+          "team": "BOS",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        }
+      ]
+    },
+    {
+      "id": "vinny",
+      "name": "Vinny",
+      "players": [
+        {
+          "name": "Tim Stützle",
+          "team": "OTT",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Clayton Keller",
+          "team": "UTA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Elias Pettersson",
+          "team": "VAN",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Jack Hughes",
+          "team": "NJ",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Bo Horvat",
+          "team": "NYI",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Elias Lindholm",
+          "team": "BOS",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Kent Johnson",
+          "team": "CBJ",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Dylan Guenther",
+          "team": "UTA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Brayden Point",
+          "team": "TB",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Jake DeBrusk",
+          "team": "VAN",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Adrian Kempe",
+          "team": "LA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Frank Nazar",
+          "team": "CHI",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Evan Bouchard",
+          "team": "EDM",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Mikhail Sergachev",
+          "team": "UTA",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Vince Dunn",
+          "team": "SEA",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Shea Theodore",
+          "team": "VGK",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        }
+      ]
+    },
+    {
+      "id": "gab",
+      "name": "Gab",
+      "players": [
+        {
+          "name": "Nathan MacKinnon",
+          "team": "COL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Auston Matthews",
+          "team": "TOR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "William Nylander",
+          "team": "TOR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Jackson Blake",
+          "team": "CAR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Jason Robertson",
+          "team": "DAL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Trevor Zegras",
+          "team": "PHI",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Lucas Raymond",
+          "team": "DET",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Will Smith",
+          "team": "SJ",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Jared McCann",
+          "team": "SEA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Jimmy Snuggerud",
+          "team": "STL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Juraj Slafkovsky",
+          "team": "MTL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Seth Jarvis",
+          "team": "CAR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-10-23",
+          "droppedOn": null
+        },
+        {
+          "name": "Jackson LaCombe",
+          "team": "ANA",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Devon Toews",
+          "team": "COL",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Miro Heiskanen",
+          "team": "DAL",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Bowen Byram",
+          "team": "CHI",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Chris Kreider",
+          "team": "MTL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "vallee",
+      "name": "Vallée",
+      "players": [
+        {
+          "name": "Jack Eichel",
+          "team": "VGK",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Leo Carlsson",
+          "team": "ANA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Kirill Marchenko",
+          "team": "TOR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Mikko Rantanen",
+          "team": "DAL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Roope Hintz",
+          "team": "DAL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Dylan Holloway",
+          "team": "STL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Pavel Zacha",
+          "team": "BOS",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Vincent Trocheck",
+          "team": "UTA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Dylan Larkin",
+          "team": "DET",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Sam Bennett",
+          "team": "FLA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Rickard Rakell",
+          "team": "PIT",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Ivar Stenberg",
+          "team": "SJ",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-10-22",
+          "droppedOn": null
+        },
+        {
+          "name": "Seth Jones",
+          "team": "FLA",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Roman Josi",
+          "team": "NSH",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Filip Hronek",
+          "team": "VAN",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Zach Werenski",
+          "team": "CBJ",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Quinton Byfield",
+          "team": "LA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": "2026-10-22"
+        }
+      ]
+    },
+    {
+      "id": "flo",
+      "name": "Flo",
+      "players": [
+        {
+          "name": "Macklin Celebrini",
+          "team": "SJ",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Andrei Svechnikov",
+          "team": "CAR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Drake Batherson",
+          "team": "OTT",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Filip Forsberg",
+          "team": "NSH",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Logan Cooley",
+          "team": "UTA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Logan Stankoven",
+          "team": "CAR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Artemi Panarin",
+          "team": "LA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Dylan Strome",
+          "team": "WSH",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Wyatt Johnston",
+          "team": "DAL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Brock Nelson",
+          "team": "COL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Gabriel Vilardi",
+          "team": "WIN",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Connor Bedard",
+          "team": "CHI",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Cale Makar",
+          "team": "COL",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Brandt Clarke",
+          "team": "LA",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Luke Hughes",
+          "team": "NJ",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Philip Broberg",
+          "team": "STL",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        }
+      ]
+    },
+    {
+      "id": "yves",
+      "name": "Yves",
+      "players": [
+        {
+          "name": "Leon Draisaitl",
+          "team": "EDM",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Mark Stone",
+          "team": "VGK",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Martin Necas",
+          "team": "COL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Matt Boldy",
+          "team": "MIN",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Gavin McKenna",
+          "team": "TOR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Mikael Granlund",
+          "team": "ANA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Nazem Kadri",
+          "team": "COL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Pavel Dorofeyev",
+          "team": "NYR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Bryan Rust",
+          "team": "PIT",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Marco Rossi",
+          "team": "VAN",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Pierre-Luc Dubois",
+          "team": "WSH",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Ryan Nugent-Hopkins",
+          "team": "EDM",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Adam Fox",
+          "team": "NYR",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Shayne Gostisbehere",
+          "team": "CAR",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Jakob Chychrun",
+          "team": "WSH",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Jake Sanderson",
+          "team": "OTT",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        }
+      ]
+    },
+    {
+      "id": "rej",
+      "name": "Réj",
+      "players": [
+        {
+          "name": "Sebastian Aho",
+          "team": "CAR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Mitch Marner",
+          "team": "VGK",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Vasily Podkolzin",
+          "team": "EDM",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Cole Perfetti",
+          "team": "WIN",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "JJ Peterka",
+          "team": "BOS",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Alex Tuch",
+          "team": "WSH",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Evgeni Malkin",
+          "team": "PIT",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Mark Scheifele",
+          "team": "WIN",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Cutter Gauthier",
+          "team": "ANA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "John Tavares",
+          "team": "TOR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Anton Frondell",
+          "team": "CHI",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Tom Wilson",
+          "team": "WSH",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Quinn Hughes",
+          "team": "MIN",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Erik Karlsson",
+          "team": "PIT",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Rasmus Andersson",
+          "team": "VGK",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Morgan Rielly",
+          "team": "TOR",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-10-23",
+          "droppedOn": null
+        },
+        {
+          "name": "K'Andre Miller",
+          "team": "CAR",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "charlene",
+      "name": "Charlène",
+      "players": [
+        {
+          "name": "David Pastrnak",
+          "team": "BOS",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Alex DeBrincat",
+          "team": "DET",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Ryan O'Reilly",
+          "team": "NSH",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Jake Guentzel",
+          "team": "TB",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Mika Zibanejad",
+          "team": "NYR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Jesper Bratt",
+          "team": "NJ",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Matvei Michkov",
+          "team": "PHI",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "J.T. Miller",
+          "team": "NYR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Sam Reinhart",
+          "team": "FLA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Morgan Geekie",
+          "team": "BOS",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Sidney Crosby",
+          "team": "PIT",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Alex Ovechkin",
+          "team": "WSH",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Lane Hutson",
+          "team": "MTL",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Thomas Harley",
+          "team": "DAL",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Noah Dobson",
+          "team": "MTL",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Mattias Ekholm",
+          "team": "EDM",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        }
+      ]
+    },
+    {
+      "id": "denis",
+      "name": "Denis",
+      "players": [
+        {
+          "name": "Steven Stamkos",
+          "team": "NSH",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Nick Schmaltz",
+          "team": "UTA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Jack Roslovic",
+          "team": "TOR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Nick Suzuki",
+          "team": "MTL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Kyle Connor",
+          "team": "WIN",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Joel Eriksson Ek",
+          "team": "MIN",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Ivan Barbashev",
+          "team": "VGK",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Tomas Hertl",
+          "team": "VGK",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Charlie Coyle",
+          "team": "CBJ",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Valeri Nichushkin",
+          "team": "CBJ",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Porter Martone",
+          "team": "PHI",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Travis Konecny",
+          "team": "PHI",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Brayden McNabb",
+          "team": "VGK",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Darren Raddysh",
+          "team": "TOR",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "John Carlson",
+          "team": "TB",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Rasmus Dahlin",
+          "team": "BUF",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        }
+      ]
+    },
+    {
+      "id": "jeff",
+      "name": "Jeff",
+      "players": [
+        {
+          "name": "Nikita Kucherov",
+          "team": "TB",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Brandon Hagel",
+          "team": "TB",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Nikolaj Ehlers",
+          "team": "CAR",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Cole Caufield",
+          "team": "MTL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Tage Thompson",
+          "team": "BUF",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Beckett Sennecke",
+          "team": "ANA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Zach Benson",
+          "team": "BUF",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Connor McMichael",
+          "team": "STL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Adam Fantilli",
+          "team": "CBJ",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Matty Beniers",
+          "team": "SEA",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Matthew Knies",
+          "team": "CBJ",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Ivan Demidov",
+          "team": "MTL",
+          "position": "F",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Cole Hutson",
+          "team": "WSH",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Mike Matheson",
+          "team": "MTL",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Victor Hedman",
+          "team": "TB",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        },
+        {
+          "name": "Thomas Chabot",
+          "team": "OTT",
+          "position": "D",
+          "playerId": null,
+          "addedOn": "2026-09-29",
+          "droppedOn": null
+        }
+      ]
+    }
+  ],
+  "seasonGames": 84
+}
