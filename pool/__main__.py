@@ -43,8 +43,11 @@ def main(argv=None):
         day = live_day(now_toronto())
         sig = signature(tonight_games(NhlClient(a.cache), day))
         online = NhlClient(a.cache).fetch_url(f"{a.url.rstrip('/')}/live.json?t={int(time.time())}") if a.url else None
-        changed = sig is not None and (not online or online.get("sig") != sig or online.get("day") != day.isoformat())
-        print(f"live night {day}: signature {sig}, online {online.get('sig') if online else None} -> changed={str(changed).lower()}")
+        # a late (throttled) live run must never replace the morning report of that night with older standings
+        official = bool(online and (online.get("morning") or "") > day.isoformat())
+        changed = sig is not None and not official and (not online or online.get("sig") != sig or online.get("day") != day.isoformat())
+        print(f"live night {day}: signature {sig}, online {online.get('sig') if online else None}"
+              f"{' (morning report already out)' if official else ''} -> changed={str(changed).lower()}")
         if os.environ.get("GITHUB_OUTPUT"):
             with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
                 f.write(f"changed={str(changed).lower()}\n")
@@ -63,8 +66,9 @@ def main(argv=None):
             directory = {p.id: p for t in TEAM_CODES for p in client.roster(t)}
             data["live"] = build_live(roster, client, today, data["poolers"], directory)
         os.makedirs(a.out, exist_ok=True)
-        if a.live:
-            json.dump(data["live"] or {"sig": None, "day": today.isoformat()}, open(os.path.join(a.out, "live.json"), "w", encoding="utf-8"), ensure_ascii=False)
+        # the morning build leaves a marker so live-check knows that night is official and never rebuilds over it
+        live_json = (data["live"] or {"sig": None, "day": today.isoformat()}) if a.live else {"sig": None, "day": None, "morning": today.isoformat()}
+        json.dump(live_json, open(os.path.join(a.out, "live.json"), "w", encoding="utf-8"), ensure_ascii=False)
         open(os.path.join(a.out, "index.html"), "w", encoding="utf-8").write(render_edge(data))
         copy_static(a.out)
         # the design was previewed at /apercu/: keep that link working

@@ -308,7 +308,8 @@ def test_build_writes_new_main_page_classic_fallback_and_redirect(tmp_path):
         assert (out / icon).read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
     page = (out / "index.html").read_text(encoding="utf-8")
     assert 'rel="manifest" href="manifest.webmanifest"' in page and "manifest-src 'self'" in page
-    assert not (out / "live.json").exists()                        # the morning build has no live part
+    # the morning build has no live part, only the marker that stops late live runs
+    assert json.loads((out / "live.json").read_text(encoding="utf-8")) == {"sig": None, "day": None, "morning": "2026-10-28"}
     live = tmp_path / "live"
     assert main(["build", "--demo", "--live", "--today", "2026-10-28", "--roster", os.path.join(ROOT, "roster.json"), "--out", str(live)]) == 0
     lj = json.loads((live / "live.json").read_text(encoding="utf-8"))
