@@ -3,10 +3,12 @@ import argparse
 import json
 import os
 import sys
+import time
 from datetime import date, timedelta
 
 from .engine import load_roster, norm, score_day
-from .nhl import NhlClient
+from .live import build_live, live_day, signature, tonight_games
+from .nhl import TEAM_CODES, NhlClient
 from .render import copy_static, render
 from .render_edge import render_edge
 
@@ -25,6 +27,11 @@ def main(argv=None):
     b.add_argument("--today", help="YYYY-MM-DD (default: today in Toronto)")
     b.add_argument("--demo", action="store_true", help="synthetic data, no network")
     b.add_argument("--classic", help="also write the previous page design to this folder (fallback)")
+    b.add_argument("--live", action="store_true", help="add tonight's points so far (evening run) and write live.json")
+    lc = sub.add_parser("live-check", help="exit status / GITHUB_OUTPUT changed=true when the live page needs a rebuild")
+    lc.add_argument("--roster", default="roster.json")
+    lc.add_argument("--cache", default="cache")
+    lc.add_argument("--url", default=os.environ.get("REPORT_URL", ""), help="site URL (reads <url>live.json)")
     c = sub.add_parser("check", help="compare with PoolExpert numbers")
     c.add_argument("--roster", default="roster.json")
     c.add_argument("--expected", default="expected.json")
@@ -32,15 +39,32 @@ def main(argv=None):
     a = ap.parse_args(argv)
 
     roster = load_roster(a.roster)
+    if a.cmd == "live-check":
+        day = live_day(now_toronto())
+        sig = signature(tonight_games(NhlClient(a.cache), day))
+        online = NhlClient(a.cache).fetch_url(f"{a.url.rstrip('/')}/live.json?t={int(time.time())}") if a.url else None
+        changed = sig is not None and (not online or online.get("sig") != sig or online.get("day") != day.isoformat())
+        print(f"live night {day}: signature {sig}, online {online.get('sig') if online else None} -> changed={str(changed).lower()}")
+        if os.environ.get("GITHUB_OUTPUT"):
+            with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+                f.write(f"changed={str(changed).lower()}\n")
+        return 0
+
     if a.cmd == "build":
-        today = date.fromisoformat(a.today) if a.today else now_toronto().date()
+        # evening run: "today" is the game night in progress (until 6 h), so the standings stay those of the morning
+        today = date.fromisoformat(a.today) if a.today else (live_day(now_toronto()) if a.live else now_toronto().date())
         if a.demo:
             from .demo import SyntheticClient
-            client = SyntheticClient(roster, today)
+            client = SyntheticClient(roster, today, live=a.live)
         else:
             client = NhlClient(a.cache)
         data = build_report(roster, client, today, demo=a.demo, url=os.environ.get("REPORT_URL", ""))
+        if a.live:
+            directory = {p.id: p for t in TEAM_CODES for p in client.roster(t)}
+            data["live"] = build_live(roster, client, today, data["poolers"], directory)
         os.makedirs(a.out, exist_ok=True)
+        if a.live:
+            json.dump(data["live"] or {"sig": None, "day": today.isoformat()}, open(os.path.join(a.out, "live.json"), "w", encoding="utf-8"), ensure_ascii=False)
         open(os.path.join(a.out, "index.html"), "w", encoding="utf-8").write(render_edge(data))
         copy_static(a.out)
         # the design was previewed at /apercu/: keep that link working

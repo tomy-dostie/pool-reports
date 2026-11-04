@@ -23,10 +23,20 @@ class Game:
     away: str
     home: str
     start_utc: str
+    away_score: int = 0
+    home_score: int = 0
+    period: int = 0
+    period_type: str = ""   # REG, OT, SO
+    clock: str = ""         # time left in the period, "12:34"
+    intermission: bool = False
 
     @property
     def is_final(self):
         return self.state in ("OFF", "FINAL")
+
+    @property
+    def started(self):
+        return self.state in ("LIVE", "CRIT", "OFF", "FINAL")
 
 
 @dataclass
@@ -39,7 +49,10 @@ class DirPlayer:
 
 def parse_score(js):
     return [Game(g["id"], date.fromisoformat(g["gameDate"]), g.get("gameState", ""), g.get("gameType", 2),
-                 g["awayTeam"]["abbrev"], g["homeTeam"]["abbrev"], g.get("startTimeUTC", ""))
+                 g["awayTeam"]["abbrev"], g["homeTeam"]["abbrev"], g.get("startTimeUTC", ""),
+                 g["awayTeam"].get("score", 0) or 0, g["homeTeam"].get("score", 0) or 0,
+                 g.get("period", 0) or 0, (g.get("periodDescriptor") or {}).get("periodType", ""),
+                 (g.get("clock") or {}).get("timeRemaining", ""), bool((g.get("clock") or {}).get("inIntermission")))
             for g in js.get("games", [])]
 
 
@@ -104,8 +117,22 @@ class NhlClient:
             json.dump(js, open(p, "w", encoding="utf-8"))
         return games
 
-    def boxscore(self, game):
-        return parse_boxscore(self._cached(f"v1/gamecenter/{game.id}/boxscore", f"boxscore-{game.id}.json"), game.date)
+    def boxscore(self, game, cache=True):
+        """Box score lines. Only a finished game is cached: a game in progress is downloaded fresh every time
+        (caching it would freeze its points at the moment of the download). The live run passes cache=False so
+        late stat corrections made right after the final buzzer are still picked up by the morning run."""
+        path = f"v1/gamecenter/{game.id}/boxscore"
+        js = self._cached(path, f"boxscore-{game.id}.json") if game.is_final and cache else self._fetch(path)
+        return parse_boxscore(js, game.date)
+
+    def fetch_url(self, url):
+        """GET any JSON URL (used to read the live.json currently online). None if missing or unreachable."""
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "pool-reports/1.0", "Cache-Control": "no-cache"})
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except (OSError, ValueError):
+            return None
 
     def roster(self, team):
         if team not in self._rosters:

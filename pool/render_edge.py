@@ -96,6 +96,17 @@ h2{margin:6px 0 0;font:700 13px 'Barlow Condensed',sans-serif;letter-spacing:.18
 .trade .num{font-size:26px;text-align:right}.trade>.small{grid-column:1/-1}
 .pop{display:inline-block;animation:pop .6s ease-out .5s both}@keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.25)}100%{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.pop{animation:none}}
+.livep{padding:14px 16px;display:flex;flex-direction:column;gap:10px;border-color:#FF4D5E;background:linear-gradient(160deg,rgba(255,77,94,.14),var(--panel) 65%)}
+.livehd{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.onair{display:inline-flex;align-items:center;gap:8px;font:800 15px 'Barlow Condensed',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#FF4D5E}
+.onair i{width:9px;height:9px;border-radius:50%;background:#FF4D5E;animation:blink 1.4s ease-in-out infinite}.onair.done{color:var(--muted)}.onair.done i{background:var(--muted);animation:none}
+@keyframes blink{50%{opacity:.25}}@media (prefers-reduced-motion:reduce){.onair i{animation:none}}
+.btn.hot{background:#FF4D5E;border-color:transparent;color:var(--ink)}
+.lv{display:grid;grid-template-columns:26px minmax(0,1fr) auto 34px;align-items:center;gap:10px;padding:10px 12px}
+.lv .rk{font-size:22px;color:var(--muted)}.lv .vv{font-size:26px;text-align:right}.lv .mv{text-align:right;font:700 13px 'Barlow Condensed',sans-serif}
+.lvs{padding:0 12px 10px 48px;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.gm{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:9px 12px;align-items:center}
+.gm .sc{font:800 20px 'Barlow Condensed',sans-serif;font-variant-numeric:tabular-nums}.gm .st{font-size:12px;color:var(--muted);text-align:right}.gm.on .st{color:#FF4D5E;font-weight:600}
 .nav{display:grid;grid-template-columns:1fr 2fr;gap:8px}
 .nav button{height:48px;border-radius:12px;text-align:center;font:700 16px 'Barlow Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase}
 #prev{background:var(--panel);border:1px solid var(--line)}#prev:disabled{color:#46536A}#next{background:var(--accent);color:var(--ink);font-weight:800}
@@ -116,7 +127,7 @@ window.DATA = __DATA__;
   var KICK = ['Aperçu', 'Ma soirée', 'Classement', 'Agents libres', 'Les prix'];
   var KPI = [['total', 'Total'], ['yday', 'Hier'], ['last7', '7 jours'], ['proj', 'Projection']];
   var idx = 0, me = null, known = false, asking = false, detail = null, rival = null, picking = false, raceKey = 'total', sortKey = 'pts';
-  var chartMode = 'pts', h2hOpen = false;
+  var chartMode = 'pts', h2hOpen = false, liveOpen = false, liveSel = null;
 
   function el(t, c, x) { var n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; }
   function add(p) { for (var i = 1; i < arguments.length; i++) if (arguments[i]) p.appendChild(arguments[i]); return p; }
@@ -190,6 +201,78 @@ window.DATA = __DATA__;
     animate = false;                                                  // coming back to this card later: no replay
     return box;
   }
+  // ---- "En direct": tonight's points so far (evening builds only; official numbers come the next morning) ----
+  function liveAge() { var L = D.live; if (!L || !L.updatedAt) return null; var m = Math.round((Date.now() - Date.parse(L.updatedAt)) / 60000); return isNaN(m) ? null : Math.max(0, m); }
+  function ago(m) { return m == null ? '' : m < 1 ? 'à l’instant' : m < 60 ? 'il y a ' + m + ' min' : 'il y a ' + Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0'); }
+  function liveStatus(L) {
+    var bits = [];
+    if (L.inProgress) bits.push(L.inProgress + ' en cours');
+    if (L.finals) bits.push(L.finals + ' ' + plural(L.finals, 'final', 'finals'));
+    if (L.upcoming) bits.push(L.upcoming + ' à venir');
+    return bits.join(' · ');
+  }
+  function onAir(L) { var o = el('span', 'onair' + (L.allDone ? ' done' : '')); add(o, el('i'), document.createTextNode(L.allDone ? 'Soirée terminée' : 'En direct')); return o; }
+  function livePanel() {
+    var L = D.live; if (!L || !L.poolers) return null;
+    var box = el('div', 'panel livep');
+    add(box, add(el('div', 'livehd'), onAir(L), el('span', 'small', 'màj ' + L.updated + ' · ' + ago(liveAge()))));
+    add(box, el('div', 'small', liveStatus(L)));
+    var mine = known ? L.poolers.filter(function (r) { return r.id === me; })[0] : null;
+    if (mine) {
+      var line = add(el('div'), el('span', 'num', '+' + mine.tonight), document.createTextNode('  ce soir · ' + ord(mine.rank) + ' provisoire'));
+      line.firstChild.style.fontSize = '40px'; line.firstChild.style.color = mine.tonight ? 'var(--text)' : 'var(--muted)';
+      if (mine.move) add(line, el('span', mine.move > 0 ? 'mv-up' : 'mv-down', mine.move > 0 ? ' ▲' + mine.move : ' ▼' + (-mine.move)));
+      add(box, line);
+    }
+    var top = L.poolers.slice().sort(function (a, b) { return b.tonight - a.tonight || (a.name < b.name ? -1 : 1); }).slice(0, 3).filter(function (r) { return r.tonight > 0; });
+    if (top.length) add(box, el('div', null, 'Ce soir : ' + top.map(function (r) { return r.name + ' +' + r.tonight; }).join(' · ')));
+    var b = el('button', 'btn hot', 'Voir le direct ›'); b.onclick = function () { liveOpen = true; show(); };
+    return add(box, b);
+  }
+  function liveView() {
+    var s = el('div', 'stack'), L = D.live, m = liveAge();
+    var back = el('button', 'link', '‹ Aperçu'); back.onclick = function () { liveOpen = false; show(); };
+    add(s, back, add(el('div', 'livehd'), onAir(L), el('span', 'small', 'màj ' + L.updated + ' · ' + ago(m))), el('h1', null, 'Soirée du ' + L.dayLabel), el('p', 'sub', liveStatus(L)));
+    if (m != null && m > 35 && !L.allDone) add(s, el('p', 'alert', 'Le direct a du retard (la mise à jour se fait aux 15 min environ). Les points arrivent.'));
+    if (L.failed) add(s, el('p', 'alert', L.failed + ' match(s) pas encore chargé(s) : points incomplets.'));
+    add(s, el('h2', null, 'Classement provisoire'));
+    var lb = el('div', 'panel rows');
+    L.poolers.forEach(function (r) {
+      var row = el('button', 'lv'), dot = el('span', 'dot'); dot.style.background = r.color;
+      var bits = ['+' + r.tonight + ' ce soir']; if (r.playing) bits.push(r.playing + ' en jeu'); if (r.toCome) bits.push(r.toCome + ' à venir');
+      var nm = add(el('div'), add(el('div', 'nm'), dot, document.createTextNode(r.name)), el('div', 'small', bits.join(' · ')));
+      nm.firstChild.style.fontWeight = 600;
+      var mv = el('span', 'mv ' + (r.move > 0 ? 'mv-up' : r.move < 0 ? 'mv-down' : 'small'), r.move > 0 ? '▲' + r.move : r.move < 0 ? '▼' + (-r.move) : '–');
+      add(row, el('span', 'rk num', String(r.rank)), nm, el('span', 'vv num', String(r.total)), mv);
+      if (r.id === me && known) row.style.background = 'var(--panel2)';
+      row.setAttribute('aria-expanded', liveSel === r.id ? 'true' : 'false');
+      row.onclick = function () { liveSel = liveSel === r.id ? null : r.id; show(true); };
+      lb.appendChild(row);
+      if (liveSel === r.id) {
+        var det = el('div', 'lvs');
+        if (r.scorers.length) r.scorers.forEach(function (x) { add(det, el('div', null, x.player + ' (' + x.team + ') · ' + x.line + ' · +' + x.pts)); });
+        else add(det, el('div', null, 'Aucun point pour l’instant.'));
+        lb.appendChild(det);
+      }
+    });
+    add(s, lb, el('p', 'small', 'Touche un pooler pour voir ses marqueurs. Rang provisoire = total de ce matin + points de ce soir.'));
+    add(s, el('h2', null, 'Matchs'));
+    var gl = el('div', 'panel rows');
+    L.games.forEach(function (g) {
+      var started = g.live || g.final;
+      add(gl, add(el('div', 'gm' + (g.live ? ' on' : '')), el('span', 'sc', started ? g.away + ' ' + g.as + ' – ' + g.hs + ' ' + g.home : g.away + ' à ' + g.home), el('span', 'st', g.status)));
+    });
+    add(s, gl, el('p', 'small', 'Provisoire. Les points officiels arrivent demain matin dans le rapport. Mise à jour aux 15 minutes environ.'));
+    return s;
+  }
+  function refreshLive() {
+    if (!D.live || !window.fetch || document.visibilityState === 'hidden') return;
+    fetch('live.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (L) {
+      if (!L || !L.poolers || L.day !== D.live.day || Date.parse(L.updatedAt) <= Date.parse(D.live.updatedAt)) return;
+      D.live = L; if (idx === 0 && !detail) show(true);
+    }, function () {});
+  }
+
   // "Install as an app": Android offers a real install prompt; iPhone needs Share -> Add to Home Screen
   var installEvt = null, standalone = !!((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone);
   var ios = /iPhone|iPad|iPod/.test(navigator.userAgent || '');
@@ -359,8 +442,10 @@ window.DATA = __DATA__;
 
   // ---- cards ----
   function cover() {
+    if (liveOpen && D.live && D.live.poolers) return liveView();
     var s = el('div', 'stack');
     add(s, add(el('div', 'date'), el('div', 'd num', String(M.dayNumber)), add(el('div'), el('div', 'm', M.month), el('div', 'small', M.weekday + ' · résultats du ' + M.lastDayLabel))));
+    add(s, livePanel());
     if (asking) add(s, whoPanel());
     else {
       var p = byId(me), ch = el('button', 'link', 'Changer');
@@ -558,12 +643,13 @@ window.DATA = __DATA__;
     card.className = 'card' + (keep ? '' : ' in'); card.textContent = ''; card.appendChild(BUILD[idx]()); card.scrollTop = sc;
     document.getElementById('kick').textContent = KICK[idx];
     var pr = document.getElementById('prog'); pr.textContent = ''; BUILD.forEach(function (_, i) { pr.appendChild(el('span', i <= idx ? 'on' : '')); });
-    document.getElementById('prev').disabled = idx === 0 && !detail;
+    document.getElementById('prev').disabled = idx === 0 && !detail && !liveOpen;
     document.getElementById('next').textContent = idx === BUILD.length - 1 ? 'Recommencer' : 'Suivant';
   }
   function go(step) {
     if (detail && step < 0) { if (rival) rival = null; else { detail = null; picking = false; } return show(); }
-    detail = null; rival = null; picking = false;
+    if (liveOpen && idx === 0 && step < 0) { liveOpen = false; return show(); }
+    detail = null; rival = null; picking = false; liveOpen = false;
     var n = idx + step; if (n >= BUILD.length) n = 0; if (n < 0) return; idx = n; show();
   }
   var ids = P.map(function (p) { return p.id; }), want = null;
@@ -573,6 +659,8 @@ window.DATA = __DATA__;
   me = known ? want : ids[0];
   asking = !known;                                     // first visit: ask "T'es qui ?" on the first card (no login)
   if (location.hash === '#equipe') { idx = RACE; detail = me; }
+  if (location.hash === '#direct' && D.live && D.live.poolers) liveOpen = true;
+  if (D.live) { refreshLive(); setInterval(refreshLive, 120000); document.addEventListener('visibilitychange', refreshLive); }
   document.getElementById('demo').hidden = !M.demo;
   document.getElementById('prev').onclick = function () { go(-1); };
   document.getElementById('next').onclick = function () { go(1); };

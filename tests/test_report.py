@@ -201,6 +201,45 @@ def test_pace_catch_threat_and_no_far_dates():
     assert out["c"]["milestone"] is None or out["c"]["milestone"]["value"] == 50
 
 
+def test_live_night_adds_tonight_to_the_morning_standings():
+    from pool.live import build_live, signature, tonight_games
+    from pool.nhl import TEAM_CODES
+    roster = load_roster(os.path.join(ROOT, "roster.json"))
+    client = SyntheticClient(roster, TODAY, live=True)
+    data = build_report(roster, client, TODAY, demo=True)
+    directory = {p.id: p for t in TEAM_CODES for p in client.roster(t)}
+    L = build_live(roster, client, TODAY, data["poolers"], directory)
+    games = tonight_games(client, TODAY)
+    started = [g for g in games if g.started]
+    assert L and L["inProgress"] and L["finals"] and L["upcoming"] and not L["allDone"]
+    lines = [l for g in started for l in client.boxscore(g)]
+    expected = score_day(roster, TODAY, lines)
+    morning = {p["id"]: p for p in data["poolers"]}
+    for r in L["poolers"]:
+        assert r["tonight"] == expected[r["id"]][0] == sum(x["pts"] for x in r["scorers"])
+        assert r["total"] == morning[r["id"]]["total"] + r["tonight"] and r["morningRank"] == morning[r["id"]]["rank"]
+        assert r["rank"] == 1 + sum(1 for x in L["poolers"] if x["total"] > r["total"]) and r["move"] == r["morningRank"] - r["rank"]
+    assert [r["rank"] for r in L["poolers"]] == sorted(r["rank"] for r in L["poolers"])
+    assert L["sig"] == signature(games) and len(L["games"]) == len(games)
+    assert any(g["live"] for g in L["games"]) and any(g["status"].startswith("Final") for g in L["games"])
+
+
+def test_no_live_before_the_first_puck_drop(built):
+    from pool.live import build_live, signature, tonight_games
+    roster, client, data = built                      # plain demo client: every game of TODAY is still to come
+    assert build_live(roster, client, TODAY, data["poolers"], {}) is None
+    assert signature(tonight_games(client, TODAY)) is None
+
+
+def test_game_night_runs_past_midnight():
+    from datetime import datetime
+    from pool.live import live_day
+    from pool.report import TORONTO
+    assert live_day(datetime(2026, 11, 4, 0, 40, tzinfo=TORONTO)) == date(2026, 11, 3)
+    assert live_day(datetime(2026, 11, 3, 19, 5, tzinfo=TORONTO)) == date(2026, 11, 3)
+    assert live_day(datetime(2026, 11, 4, 7, 0, tzinfo=TORONTO)) == date(2026, 11, 4)
+
+
 def test_page_has_the_team_card(built):
     _, _, data = built
     page = render(data)
@@ -264,6 +303,12 @@ def test_build_writes_new_main_page_classic_fallback_and_redirect(tmp_path):
         assert (out / icon).read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
     page = (out / "index.html").read_text(encoding="utf-8")
     assert 'rel="manifest" href="manifest.webmanifest"' in page and "manifest-src 'self'" in page
+    assert not (out / "live.json").exists()                        # the morning build has no live part
+    live = tmp_path / "live"
+    assert main(["build", "--demo", "--live", "--today", "2026-10-28", "--roster", os.path.join(ROOT, "roster.json"), "--out", str(live)]) == 0
+    lj = json.loads((live / "live.json").read_text(encoding="utf-8"))
+    assert lj["sig"] and lj["day"] == "2026-10-28" and len(lj["poolers"]) == 10
+    assert json.loads((live / "data.json").read_text(encoding="utf-8"))["live"]["sig"] == lj["sig"]
     assert json.loads((out / "data.json").read_text(encoding="utf-8"))["meta"]["demo"] is True
 
 

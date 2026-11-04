@@ -20,6 +20,21 @@ def test_score_lists_finished_regular_season_games():
     assert all(g.is_final and g.date == D and g.game_type == 2 for g in games)
     first = next(g for g in games if g.id == 2026020188)
     assert (first.away, first.home) == ("CBJ", "PHI")
+    assert first.away_score == 4 and first.period == 4 and first.period_type == "OT" and first.started
+
+
+def test_unfinished_games_are_never_cached(tmp_path):
+    from pool.nhl import Game, NhlClient
+    calls = []
+    client = NhlClient(str(tmp_path))
+    client._fetch = lambda path: calls.append(path) or load("boxscore-2026020188.json")
+    live = Game(1, D, "LIVE", 2, "CBJ", "PHI", "")
+    final = Game(2, D, "OFF", 2, "CBJ", "PHI", "")
+    client.boxscore(live); client.boxscore(live)
+    client.boxscore(final, cache=False)
+    assert len(calls) == 3 and not list(tmp_path.iterdir())          # nothing written while live / live run
+    client.boxscore(final); client.boxscore(final)
+    assert len(calls) == 4 and (tmp_path / "boxscore-2.json").exists()   # morning run: cached once
 
 
 def test_boxscore_gives_goals_assists_ids_positions():
