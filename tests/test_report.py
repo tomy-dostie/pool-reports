@@ -308,6 +308,10 @@ def test_build_writes_new_main_page_classic_fallback_and_redirect(tmp_path):
         assert (out / icon).read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
     page = (out / "index.html").read_text(encoding="utf-8")
     assert 'rel="manifest" href="manifest.webmanifest"' in page and "manifest-src 'self'" in page
+    # every build has a stamp the open page compares with version.json to reload itself
+    stamp = json.loads((out / "version.json").read_text(encoding="utf-8"))["build"]
+    assert json.loads((out / "data.json").read_text(encoding="utf-8"))["meta"]["build"] == stamp
+    assert "version.json" in page and "checkVersion" in page
     # the morning build has no live part, only the marker that stops late live runs
     assert json.loads((out / "live.json").read_text(encoding="utf-8")) == {"sig": None, "day": None, "morning": "2026-10-28"}
     live = tmp_path / "live"

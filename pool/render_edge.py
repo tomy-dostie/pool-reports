@@ -847,6 +847,30 @@ window.DATA = __DATA__;
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && route.screen) goBack(); });
   if (D.live) { refreshLive(); setInterval(refreshLive, 120000); document.addEventListener('visibilitychange', refreshLive); }
+
+  // New report deployed? Phones keep the installed app in memory and never reload it by themselves:
+  // check version.json when the app comes back on screen (reload right away) and every 2 min while it is open
+  // (reload only when idle on Accueil / En direct, so nobody loses their spot mid-scroll).
+  var lastTouch = 0;
+  ['touchstart', 'scroll', 'keydown', 'click'].forEach(function (ev) {
+    document.addEventListener(ev, function () { lastTouch = Date.now(); }, { passive: true, capture: true });
+  });
+  function checkVersion(resume) {
+    if (!M.build || !window.fetch || document.visibilityState === 'hidden') return;
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
+      if (!v || !v.build || String(v.build) <= String(M.build)) return;
+      if (!resume && (Date.now() - lastTouch < 30000 || (route.screen && route.screen !== 'direct'))) return;
+      try {
+        var q = new URLSearchParams(location.search); q.set('v', v.build);   // new URL: skips the 10-min HTTP cache
+        location.replace(location.pathname + '?' + q.toString() + location.hash);
+      } catch (e) { location.reload(); }
+    }, function () {});
+  }
+  document.addEventListener('visibilitychange', function () { checkVersion(true); });
+  window.addEventListener && window.addEventListener('pageshow', function (e) { if (e.persisted) checkVersion(true); });
+  window.addEventListener && window.addEventListener('focus', function () { checkVersion(true); });
+  setInterval(function () { checkVersion(false); }, 120000);
+  checkVersion(true);
   document.getElementById('demo').hidden = !M.demo;
   render();
 })();

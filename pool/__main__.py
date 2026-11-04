@@ -66,6 +66,9 @@ def main(argv=None):
             directory = {p.id: p for t in TEAM_CODES for p in client.roster(t)}
             data["live"] = build_live(roster, client, today, data["poolers"], directory)
         os.makedirs(a.out, exist_ok=True)
+        # build stamp: an open page (or the installed app, which phones keep in memory) reloads when version.json changes
+        data["meta"]["build"] = time.strftime("%Y%m%d%H%M%S", time.gmtime())
+        json.dump({"build": data["meta"]["build"]}, open(os.path.join(a.out, "version.json"), "w", encoding="utf-8"))
         # the morning build leaves a marker so live-check knows that night is official and never rebuilds over it
         live_json = (data["live"] or {"sig": None, "day": today.isoformat()}) if a.live else {"sig": None, "day": None, "morning": today.isoformat()}
         json.dump(live_json, open(os.path.join(a.out, "live.json"), "w", encoding="utf-8"), ensure_ascii=False)
