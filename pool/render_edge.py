@@ -69,7 +69,8 @@ h2{margin:8px 0 0;font:700 15px 'Barlow Condensed',sans-serif;letter-spacing:.1e
 /* anything tappable: arrow on the right + pressed state */
 .tap{position:relative;padding-right:36px !important;min-height:48px}
 .tap::after{content:'›';position:absolute;right:13px;top:50%;transform:translateY(-52%);font-size:26px;line-height:1;color:var(--faint)}
-.tap:active,.tap:hover{background:var(--panel2)}
+.tap:active{background:var(--panel2)}
+@media (hover:hover){.tap:hover{background:var(--panel2)}}   /* iOS keeps :hover after a tap: only real mice get it */
 .link{min-height:44px;font-size:16px;color:var(--accent);font-weight:600}
 .btn{min-height:48px;border-radius:12px;background:transparent;border:1.5px solid var(--line);text-align:center;font:700 16px 'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase}
 .btn:active{background:var(--panel2)}
@@ -142,7 +143,7 @@ h2{margin:8px 0 0;font:700 15px 'Barlow Condensed',sans-serif;letter-spacing:.1e
 .welcome h1{font-size:42px}
 .picks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .pick{display:flex;align-items:center;gap:12px;padding:10px 12px;min-height:66px;border-radius:14px;background:var(--panel);border:1.5px solid var(--line)}
-.pick:active,.pick:hover{background:var(--panel2)}.pick[aria-pressed=true]{border-color:var(--accent)}
+.pick:active{background:var(--panel2)}@media (hover:hover){.pick:hover{background:var(--panel2)}}.pick[aria-pressed=true]{border-color:var(--accent)}
 .pick .nm{font-size:18px}.pick .small{font-size:13px}
 .toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:min(92vw,480px);background:var(--accent);color:var(--ink);font-weight:700;font-size:16px;padding:12px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:10;text-align:center}
 </style>
