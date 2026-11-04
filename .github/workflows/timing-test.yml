@@ -1,0 +1,17 @@
+# Temporary test (2026-11-03): measures how late GitHub starts scheduled runs during game nights.
+# Does nothing but wake up; the delay is read afterwards from each run's start time. Delete after 2 evenings.
+name: Test horaire (soirée)
+
+on:
+  schedule:
+    - cron: "*/15 0-5 * * *"     # every 15 min, 19 h to 0 h 45 in Toronto (winter time, UTC-5)
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - run: echo "tick $(date -u +%H:%M:%S)"
