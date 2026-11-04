@@ -11,9 +11,16 @@ TEMPLATE = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0A0D12">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pool LNH">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Pool LNH : analyse</title>
 <style>
 __FONTS__
@@ -22,7 +29,7 @@ __FONTS__
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Barlow',system-ui,sans-serif;-webkit-text-size-adjust:100%}
 button{font:inherit;color:inherit;border:0;background:transparent;padding:0;cursor:pointer;text-align:left}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.app{height:100vh;height:100dvh;max-width:520px;margin:0 auto;padding:14px 16px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
+.app{height:100vh;height:100dvh;max-width:520px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
 .bar-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .brand{font:800 18px 'Barlow Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase}.brand b{color:var(--accent)}
 .kick{font:700 12px 'Barlow Condensed',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
@@ -182,6 +189,22 @@ window.DATA = __DATA__;
     add(box, el('div', 'small', 'Résultats du ' + base.label + ' au ' + M.lastDayLabel + '.'));
     animate = false;                                                  // coming back to this card later: no replay
     return box;
+  }
+  // "Install as an app": Android offers a real install prompt; iPhone needs Share -> Add to Home Screen
+  var installEvt = null, standalone = !!((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone);
+  var ios = /iPhone|iPad|iPod/.test(navigator.userAgent || '');
+  window.addEventListener && window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); installEvt = e; if (idx === 0 && !detail) show(true); });
+  function installPanel() {
+    var said = null; try { said = localStorage.getItem('pool.install'); } catch (e) {}
+    if (standalone || said === 'non' || M.demo || (!installEvt && !ios)) return null;
+    var box = add(el('div', 'panel who'), el('div', 'kick', 'Le pool sur ton écran d’accueil'));
+    if (installEvt) {
+      var b = el('button', 'btn', 'Installer l’app');
+      b.onclick = function () { installEvt.prompt(); installEvt = null; show(true); };
+      add(box, el('p', 'sub', 'Une icône, plein écran, un tap le matin.'), b);
+    } else add(box, el('p', 'sub', 'Sur iPhone : touche Partager (le carré avec la flèche), puis « Sur l’écran d’accueil ». Ça ouvre le pool en plein écran, comme une app.'));
+    var no = el('button', 'link', 'Non merci'); no.onclick = function () { try { localStorage.setItem('pool.install', 'non'); } catch (e) {} show(true); };
+    return add(box, no);
   }
   function setMe(id) { me = id; asking = false; known = true; try { localStorage.setItem('pool.me', id); } catch (e) {} }
   function whoPanel() {
@@ -354,6 +377,7 @@ window.DATA = __DATA__;
     add(s, lb);
     var rm = D.recentMoves || [];
     if (rm.length) { var names = []; rm.forEach(function (m) { if (names.indexOf(m.name) < 0) names.push(m.name); }); var b = el('button', 'link', 'Mouvements récents : ' + names.join(', ') + ' ›'); b.onclick = function () { open(rm[0].id); }; add(s, b); }
+    if (!asking) add(s, installPanel());
     if (M.missingGames) add(s, el('p', 'alert', M.missingGames + ' match(s) non chargé(s) : points possiblement incomplets.'));
     if (M.unresolved && M.unresolved.length) add(s, el('p', 'alert', 'Joueur non reconnu, points possiblement incomplets : ' + M.unresolved.join(', ') + '.'));
     add(s, el('p', 'small', 'Mis à jour le ' + M.updated + '.'));

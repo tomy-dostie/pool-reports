@@ -342,12 +342,17 @@ FONT_CSS = "\n".join(f"@font-face{{font-family:'{fam}';font-weight:{w};font-styl
                      for fam, w, f in FONTS)
 
 
+APP_DIR = os.path.join(os.path.dirname(__file__), "static", "app")
+
+
 def copy_static(out):
-    """Copy the font files next to index.html."""
+    """Copy the font files (fonts/) and the home-screen app files (manifest + icons) next to index.html."""
     dest = os.path.join(out, "fonts")
     os.makedirs(dest, exist_ok=True)
     for name in os.listdir(FONT_DIR):
         shutil.copyfile(os.path.join(FONT_DIR, name), os.path.join(dest, name))
+    for name in os.listdir(APP_DIR):
+        shutil.copyfile(os.path.join(APP_DIR, name), os.path.join(out, name))
 
 
 def _embed(data):

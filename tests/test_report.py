@@ -258,6 +258,12 @@ def test_build_writes_new_main_page_classic_fallback_and_redirect(tmp_path):
     assert 'url=../' in (out / "apercu" / "index.html").read_text(encoding="utf-8")
     for d in (out, out / "classique"):
         assert (d / "fonts" / "barlow-400.woff2").exists()
+    manifest = json.loads((out / "manifest.webmanifest").read_text(encoding="utf-8"))
+    assert manifest["display"] == "standalone" and manifest["start_url"] == "./"
+    for icon in {i["src"] for i in manifest["icons"]} | {"apple-touch-icon.png"}:
+        assert (out / icon).read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+    page = (out / "index.html").read_text(encoding="utf-8")
+    assert 'rel="manifest" href="manifest.webmanifest"' in page and "manifest-src 'self'" in page
     assert json.loads((out / "data.json").read_text(encoding="utf-8"))["meta"]["demo"] is True
 
 
