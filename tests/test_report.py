@@ -172,6 +172,20 @@ def test_season_records(built):
     assert all(r["who"] in by_id and isinstance(r["new"], bool) and r["text"] for r in data["records"])
 
 
+def test_tonight_clash_is_the_busiest_game(built):
+    _, _, data = built
+    per_game = {}
+    for p in data["poolers"]:
+        for t in p["tonight"]:
+            a, sep, b = t["game"].partition(" c. ") if " c. " in t["game"] else t["game"].partition(" à ")
+            home = a if sep == " c. " else b
+            per_game.setdefault(home, []).append(p["id"])
+    c = data["tonightClash"]
+    assert c and c["players"] == max(len(v) for v in per_game.values())
+    home = c["game"].split(" à ")[1]
+    assert c["players"] == len(per_game[home]) == sum(x["n"] for x in c["poolers"])
+
+
 def test_page_has_the_team_card(built):
     _, _, data = built
     page = render(data)

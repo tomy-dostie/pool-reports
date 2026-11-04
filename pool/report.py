@@ -313,6 +313,7 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
     last_week = [d for d in trend_days if d > last_day - timedelta(days=7)]
 
     poolers = []
+    clash = defaultdict(list)            # home team -> pooler id per owned player in that game tonight
     for i, p in enumerate(roster.poolers):
         rank, _, name, total, yday, move = by_id_row[p.id]
         scorers = [{"player": full_name(pid, nm), "line": _ga(g, a), "pts": pts}
@@ -327,6 +328,7 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
                 opp, home, start = schedule[team]
                 tonight.append({"player": s.name, "game": f"{team} c. {opp}" if home else f"{team} à {opp}",
                                 "time": _clock(start), "_sort": start})
+                clash[team if home else opp].append(p.id)          # keyed by the home team: one entry per game
         tonight.sort(key=lambda x: (x["_sort"], x["player"]))
         for t in tonight:
             del t["_sort"]
@@ -346,6 +348,18 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
     kpis = {k: _rank_and_avg({p["id"]: p[k] for p in poolers}) for k in ("total", "yday", "last7", "proj")}
     for p in poolers:
         p["kpi"] = {k: kpis[k][p["id"]] for k in kpis}
+
+    # tonight's "choc": the game with the most pool players in it (then the most poolers involved)
+    tonight_clash = None
+    if clash:
+        home = max(clash, key=lambda h: (len(clash[h]), len(set(clash[h])), h))
+        away, _, start = schedule[home]
+        count = defaultdict(int)
+        for pid in clash[home]:
+            count[pid] += 1
+        tonight_clash = {"game": f"{away} à {home}", "time": _clock(start), "players": len(clash[home]),
+                         "poolers": sorted(({"id": p["id"], "name": p["name"], "color": p["color"], "n": count[p["id"]]}
+                                            for p in poolers if count[p["id"]]), key=lambda x: (-x["n"], x["name"]))}
 
     # night by night: rank after each game day (bump chart) and nights won against each pooler
     ranks, h2h, h2h_streak = nightly(roster, results, trend_days, lines_by_day)
@@ -502,5 +516,5 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
             "unresolved": [u.split("'")[1] for u in unresolved if "'" in u],
         },
         "headline": headline, "tiles": tiles, "poolers": poolers, "deals": deals, "cold": cold,
-        "awards": awards, "chatter": chatter, "recentMoves": recent_moves, "trades": trades, "records": records, "trendDays": [_short(d) for d in trend_days], "summary":"\n".join(summary), "warnings": sorted(set(warnings)),
+        "awards": awards, "chatter": chatter, "recentMoves": recent_moves, "trades": trades, "records": records, "tonightClash": tonight_clash, "trendDays": [_short(d) for d in trend_days], "summary":"\n".join(summary), "warnings": sorted(set(warnings)),
     }

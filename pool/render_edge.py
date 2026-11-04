@@ -283,6 +283,43 @@ window.DATA = __DATA__;
     return box;
   }
 
+  // "Qui porte l'équipe": each player's share of the pooler's points (players gone included)
+  function shares(p) {
+    var m = {}; p.team.concat(p.former).forEach(function (r) { m[r.player] = (m[r.player] || 0) + r.pts; });
+    return Object.keys(m).map(function (k) { return { player: k, pts: m[k], pct: p.total ? Math.round(100 * m[k] / p.total) : 0 }; })
+      .filter(function (x) { return x.pts > 0; }).sort(function (a, b) { return b.pts - a.pts; });
+  }
+  function carry(p) {
+    var sh = shares(p); if (!sh.length || !p.total) return null;
+    var top = sh.slice(0, 4), rest = p.total - top.reduce(function (a, x) { return a + x.pts; }, 0);
+    var bar = el('div'); bar.style.cssText = 'display:flex;height:14px;border-radius:5px;overflow:hidden;background:var(--panel2);gap:2px';
+    var leg = el('div'); leg.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px';
+    top.forEach(function (x, i) {
+      var seg = el('div'); seg.style.flex = String(x.pts); seg.style.background = p.color; seg.style.opacity = String(1 - i * .2); bar.appendChild(seg);
+      var k = el('span'); var d = el('span', 'dot'); d.style.background = p.color; d.style.opacity = String(1 - i * .2);
+      add(leg, add(k, d, document.createTextNode(last(x.player) + ' '), el('b', null, x.pct + ' %')));
+    });
+    if (rest > 0) { var o = el('div'); o.style.flex = String(rest); o.style.background = 'var(--mid)'; o.style.opacity = '.5'; bar.appendChild(o); add(leg, el('span', 'small', 'Autres ' + Math.round(100 * rest / p.total) + ' %')); }
+    var lead = top[0], say = lead.pct >= 20 ? 'Sans ' + last(lead.player) + ', ça irait mal.' : lead.pct <= 12 ? 'Une équipe balancée : personne ne porte tout.' : last(lead.player) + ' mène la charge.';
+    return add(el('div', 'stack'), el('h2', null, 'Qui porte l’équipe'), add(el('div', 'panel lead'), bar, leg, el('p', 'small', say)));
+  }
+  // tonight: the game with the most pool players, and how many players each pooler has in action
+  function tonightPanel() {
+    var c = D.tonightClash, load = P.map(function (p) { return { p: p, n: p.tonight.length }; }).filter(function (x) { return x.n; }).sort(function (a, b) { return b.n - a.n || (a.p.name < b.p.name ? -1 : 1); });
+    if (!c && !load.length) return null;
+    var box = el('div', 'panel lead');
+    add(box, el('div', 'kick', 'Ce soir · ' + M.gamesTonight + ' ' + plural(M.gamesTonight, 'match', 'matchs')));
+    if (c) {
+      add(box, el('div', 't', 'Le choc : ' + c.game), el('p', 'small', c.time + ' · ' + c.players + ' joueurs du pool : ' + c.poolers.map(function (x) { return x.name + ' ' + x.n; }).join(', ')));
+    }
+    if (load.length) {
+      var w = el('div'); w.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
+      load.forEach(function (x) { var t = el('span', 'tag', x.p.name + ' ' + x.n); if (x.p.id === me && !asking) { t.style.background = x.p.color; t.style.color = 'var(--ink)'; } w.appendChild(t); });
+      add(box, el('div', 'small', 'Joueurs en action'), w);
+    }
+    return box;
+  }
+
   // ---- cards ----
   function cover() {
     var s = el('div', 'stack');
@@ -297,7 +334,7 @@ window.DATA = __DATA__;
     add(s, add(el('div', 'panel lead'), el('div', 't', D.headline.title), el('p', null, D.headline.text)));
     var t = el('div', 'tiles three');
     D.tiles.forEach(function (x) { add(t, add(el('div', 'panel tile'), el('div', 'l', x.label), el('div', 'v num', x.value))); });
-    add(s, t, el('h2', null, 'Le podium'));
+    add(s, t, tonightPanel(), el('h2', null, 'Le podium'));
     var lb = el('div', 'panel rows');
     P.slice(0, 3).forEach(function (p) { lb.appendChild(lbRow(p, 'total', maxOf('total'))); });
     add(s, lb);
@@ -317,6 +354,14 @@ window.DATA = __DATA__;
     if (p.scorers.length) p.scorers.forEach(function (x) { add(l, add(el('div', 'pl'), add(el('span'), el('div', 'nm', x.player), el('div', 'small', x.line)), add(el('span', 'pp'), el('span', 'num', String(x.pts))))); });
     else add(l, add(el('div', 'pl'), el('span', 'small', 'Personne n’a pointé. Soirée difficile.')));
     add(s, l, el('h2', null, 'Ce soir · ' + (p.tonight.length ? p.tonight.length + ' ' + plural(p.tonight.length, 'joueur', 'joueurs') : 'aucun joueur')));
+    if (p.tonight.length) {
+      var more = 1 + P.filter(function (q) { return q.tonight.length > p.tonight.length; }).length;
+      add(s, el('p', 'small', more === 1 ? 'Le plus gros alignement en action ce soir. À toi de jouer.' : ord(more) + ' plus gros alignement en action ce soir.'));
+    }
+    if (D.tonightClash && D.tonightClash.poolers.some(function (x) { return x.id === p.id; })) {
+      var c = D.tonightClash, foes = c.poolers.filter(function (x) { return x.id !== p.id; }).map(function (x) { return x.name; });
+      if (foes.length) add(s, el('p', 'small', 'Le choc de la soirée (' + c.game + ') : tu y affrontes ' + foes.join(', ') + '.'));
+    }
     if (p.tonight.length) { var g = el('div', 'panel rows'); p.tonight.forEach(function (x) { add(g, add(el('div', 'pl'), add(el('span'), el('div', 'nm', x.player), el('div', 'small', x.game)), add(el('span', 'pp'), el('span', 'num', x.time)))); }); add(s, g); }
     var b = el('button', 'btn', 'Voir mon alignement'); b.onclick = function () { open(me); }; add(s, b);
     return s;
@@ -347,7 +392,7 @@ window.DATA = __DATA__;
     add(s, back, add(el('div', 'panel hero'), ini, add(el('div'), el('div', 'nm', p.name), el('div', 'small', ord(p.rank) + ' sur ' + P.length + (p.rank === 1 ? ' · au sommet' : ' · à ' + p.gap + ' du 1er'))), el('div', 'tot num', String(p.total))));
     var t = el('div', 'tiles'); KPI.forEach(function (k) { t.appendChild(tile(k[1], k[0], p)); }); add(s, t);
     add(s, el('h2', null, 'Progression de la saison'), chartToggle(), chart([p.id]));
-    add(s, nights(p));
+    add(s, nights(p), carry(p));
     var duelBtn = el('button', 'btn', picking ? 'Choisis un adversaire' : 'Duel contre un pooler'); duelBtn.onclick = function () { picking = !picking; show(true); };
     add(s, duelBtn);
     if (picking) add(s, chips(null, function (id) { rival = id; picking = false; }, p.id));
@@ -434,6 +479,13 @@ window.DATA = __DATA__;
         rl.appendChild(r);
       });
       add(s, el('h2', null, 'Records de la saison'), rl);
+    }
+    var dep = P.map(function (p) { var x = shares(p)[0]; return x && { p: p, x: x }; }).filter(Boolean).sort(function (a, b) { return b.x.pct - a.x.pct; })[0];
+    if (dep) {
+      var dr = el('button', 'trade'); dr.onclick = function () { open(dep.p.id); };
+      add(dr, add(el('div'), el('div', 'small', 'Le plus dépendant'), el('div', null, dep.p.name + ' : ' + last(dep.x.player) + ' fait ' + dep.x.pct + ' % de ses points')), el('span', 'num', dep.x.pct + ' %'));
+      dr.firstChild.lastChild.style.fontWeight = 600;
+      add(s, add(el('div', 'panel rows'), dr));
     }
     var T = D.trades || [];
     if (T.length) {
