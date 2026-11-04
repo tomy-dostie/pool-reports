@@ -130,6 +130,103 @@ def team_sheet(pooler, roster, lines_by_day, game_days, last_day, directory, tod
     return team, former, moves
 
 
+def _day_ranks(totals):
+    """{id: total} -> {id: rank}; ties share a rank (same rule as engine.standings)."""
+    return {k: 1 + sum(1 for x in totals.values() if x > v) for k, v in totals.items()}
+
+
+def nightly(roster, results, game_days, lines_by_day):
+    """Night-by-night view of the season, from the same per-night points as the standings.
+
+    Returns (ranks, h2h, streaks):
+      ranks[id]       = rank after each game day (aligned with game_days)
+      h2h[id][other]  = [nights won, lost, tied] against that pooler (more pool points that night = a win)
+      streaks[id][other] = current run: +n = n nights won in a row, -n = lost in a row, 0 = last night tied"""
+    ids = [p.id for p in roster.poolers]
+    run = {i: 0 for i in ids}
+    ranks = {i: [] for i in ids}
+    h2h = {a: {b: [0, 0, 0] for b in ids if b != a} for a in ids}
+    streaks = {a: {b: 0 for b in ids if b != a} for a in ids}
+    for d in game_days:
+        night = {i: results[d][i][0] for i in ids}
+        for i in ids:
+            run[i] += night[i]
+        rk = _day_ranks(run)
+        for i in ids:
+            ranks[i].append(rk[i])
+        for a in ids:
+            for b in h2h[a]:
+                k = 0 if night[a] > night[b] else 1 if night[a] < night[b] else 2
+                h2h[a][b][k] += 1
+                s = streaks[a][b]
+                streaks[a][b] = (s + 1 if s > 0 else 1) if k == 0 else (s - 1 if s < 0 else -1) if k == 1 else 0
+    return ranks, h2h, streaks
+
+
+def season_records(roster, results, game_days, lines_by_day, names, upto=None):
+    """The pool's season records over game_days[:upto]: list of {key, label, value, text, who}."""
+    days = game_days[:upto] if upto is not None else game_days
+    if not days:
+        return []
+    ids = [p.id for p in roster.poolers]
+    out = []
+    # best night by a pooler
+    best = max((results[d][i][0], -n, i, d) for n, d in enumerate(days) for i in ids)
+    if best[0] > 0:
+        out.append({"key": "night", "label": "Meilleure soirée", "value": best[0], "who": best[2],
+                    "text": f"{names[best[2]]} : +{best[0]} pts le {_short(best[3])}"})
+    # best single player night for an owner
+    top = None
+    for n, d in enumerate(days):
+        for i in ids:
+            for nm, tm, g, a, pts, pid in results[d][i][1]:
+                if top is None or pts > top[0]:
+                    top = (pts, i, d, pid, nm)
+    if top:
+        out.append({"key": "player", "label": "Meilleur match d’un joueur", "value": top[0], "who": top[1], "pid": top[3],
+                    "text": f"{top[0]} pts : {top[4].split(' ')[-1]} pour {names[top[1]]}, {_short(top[2])}"})
+    # longest run at 1st place (ties at 1st count), and biggest climb after the first 5 game days
+    run = {i: 0 for i in ids}
+    first, cur, climb = None, {i: 0 for i in ids}, None
+    worst = {i: 0 for i in ids}
+    for n, d in enumerate(days):
+        for i in ids:
+            run[i] += results[d][i][0]
+        rk = _day_ranks(run)
+        for i in ids:
+            cur[i] = cur[i] + 1 if rk[i] == 1 else 0
+            if cur[i] and (first is None or cur[i] > first[0]):
+                first = (cur[i], i)
+            if n >= 5:
+                worst[i] = max(worst[i], rk[i])
+                if climb is None or worst[i] - rk[i] > climb[0]:
+                    climb = (worst[i] - rk[i], i, worst[i], rk[i])
+    if first:
+        out.append({"key": "first", "label": "Plus long règne au 1er rang", "value": first[0], "who": first[1],
+                    "text": f"{names[first[1]]} : {first[0]} {_plural(first[0], 'soir', 'soirs')} de suite"})
+    if climb and climb[0] >= 2:
+        out.append({"key": "climb", "label": "Plus grosse remontée", "value": climb[0], "who": climb[1],
+                    "text": f"{names[climb[1]]} : du {climb[2]}e au {'1er' if climb[3] == 1 else str(climb[3]) + 'e'} rang"})
+    # longest point streak by a player while owned (games he played; a game without a point ends it)
+    streak = None
+    for p in roster.poolers:
+        for s in p.players:
+            c = 0
+            for d in days:
+                if not s.counts_on(d):
+                    continue
+                l = find_line(s, lines_by_day[d], [])
+                if l is None:
+                    continue
+                c = c + 1 if l.goals + l.assists > 0 else 0
+                if c and (streak is None or c > streak[0]):
+                    streak = (c, p.id, s.name)
+    if streak and streak[0] >= 3:
+        out.append({"key": "streak", "label": "Plus longue séquence d’un joueur", "value": streak[0], "who": streak[1],
+                    "text": f"{streak[2].split(' ')[-1]} ({names[streak[1]]}) : {streak[0]} matchs de suite avec un point"})
+    return out
+
+
 MIN_GAMES_FOR_RANK = 5
 
 
@@ -250,6 +347,16 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
     for p in poolers:
         p["kpi"] = {k: kpis[k][p["id"]] for k in kpis}
 
+    # night by night: rank after each game day (bump chart) and nights won against each pooler
+    ranks, h2h, h2h_streak = nightly(roster, results, trend_days, lines_by_day)
+    for p in poolers:
+        p["ranks"], p["h2h"], p["h2hStreak"] = ranks[p["id"]], h2h[p["id"]], h2h_streak[p["id"]]
+    names = {p["id"]: p["name"] for p in poolers}
+    records = season_records(roster, results, trend_days, lines_by_day, names)
+    before = {r["key"]: r["value"] for r in season_records(roster, results, trend_days, lines_by_day, names, upto=-1)} if len(trend_days) > 1 else None
+    for r in records:
+        r["new"] = before is not None and r["value"] > before.get(r["key"], 0)
+
     # per-player history for streaks and slumps
     history = defaultdict(list)          # id -> [(date, points, goals, assists, name, team, position)]
     for d in game_days:
@@ -347,6 +454,14 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
         chatter.append({"tag": "Dans le rétroviseur", "good": True, "name": c["name"], "color": c["color"], "text": f"{c['name']} n’est qu’à {c['gap']} {_plural(c['gap'], 'point', 'points')} du sommet. Rien n’est joué."})
     if top_mover and top_mover["move"] >= 2:
         chatter.append({"tag": "Remontée", "good": True, "name": top_mover["name"], "color": top_mover["color"], "text": f"{top_mover['name']} gagne {top_mover['move']} rangs en une soirée."})
+    # the longest current run of nights won by one pooler against another
+    runs = sorted(((s, a, b) for a, row in h2h_streak.items() for b, s in row.items() if s >= 4), key=lambda x: (-x[0], names[x[1]], names[x[2]]))
+    if runs:
+        s, a, b = runs[0]
+        pa = next(p for p in poolers if p["id"] == a)
+        chatter.insert(min(2, len(chatter)), {"tag": "Bête noire", "good": True, "name": names[a], "color": pa["color"],
+                       "text": f"{names[a]} bat {names[b]} {s} soirs de suite. Quelqu’un doit arrêter ça."})
+
     # every completed move (one out, one in), judged by what each player did afterwards
     trades = []
     for p in poolers:
@@ -387,5 +502,5 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
             "unresolved": [u.split("'")[1] for u in unresolved if "'" in u],
         },
         "headline": headline, "tiles": tiles, "poolers": poolers, "deals": deals, "cold": cold,
-        "awards": awards, "chatter": chatter, "recentMoves": recent_moves, "trades": trades, "trendDays": [_short(d) for d in trend_days], "summary":"\n".join(summary), "warnings": sorted(set(warnings)),
+        "awards": awards, "chatter": chatter, "recentMoves": recent_moves, "trades": trades, "records": records, "trendDays": [_short(d) for d in trend_days], "summary":"\n".join(summary), "warnings": sorted(set(warnings)),
     }

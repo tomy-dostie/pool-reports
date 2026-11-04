@@ -133,6 +133,45 @@ def test_trades_judge_each_move_by_what_came_after(built):
         assert all("after" not in r for r in p["team"])
 
 
+def test_nights_won_are_symmetric_and_ranks_end_at_today(built):
+    roster, _, data = built
+    by_id = {p["id"]: p for p in data["poolers"]}
+    n_days = len(data["trendDays"])
+    for p in data["poolers"]:
+        assert len(p["ranks"]) == n_days and p["ranks"][-1] == p["rank"]
+        assert all(1 <= r <= len(by_id) for r in p["ranks"])
+        assert set(p["h2h"]) == set(by_id) - {p["id"]}
+        for q, (w, l, t) in p["h2h"].items():
+            assert w + l + t == n_days
+            assert by_id[q]["h2h"][p["id"]] == [l, w, t]                  # my wins are their losses
+            assert by_id[q]["h2hStreak"][p["id"]] == -p["h2hStreak"][q]
+
+
+def test_nights_won_brute_force():
+    from pool.report import nightly
+    from pool.engine import Pooler, Roster
+    d = [date(2026, 10, k) for k in (1, 2, 3, 4)]
+    roster = Roster([Pooler("a", "A"), Pooler("b", "B")])
+    pts = {"a": [3, 1, 2, 4], "b": [1, 1, 3, 0]}
+    results = {x: {i: (pts[i][k], []) for i in pts} for k, x in enumerate(d)}
+    ranks, h2h, streaks = nightly(roster, results, d, {x: [] for x in d})
+    assert h2h["a"]["b"] == [2, 1, 1] and h2h["b"]["a"] == [1, 2, 1]
+    assert streaks["a"]["b"] == 1 and streaks["b"]["a"] == -1
+    assert ranks["a"] == [1, 1, 1, 1] and ranks["b"] == [2, 2, 2, 2]    # a: 3,4,6,10  b: 1,2,5,5
+
+
+def test_season_records(built):
+    roster, _, data = built
+    by_id = {p["id"]: p for p in data["poolers"]}
+    recs = {r["key"]: r for r in data["records"]}
+    assert {"night", "player", "first"} <= set(recs)
+    best_night = max(max(b - a for a, b in zip([0] + p["trend"], p["trend"])) for p in data["poolers"])
+    assert recs["night"]["value"] == best_night
+    longest = max(max((sum(1 for _ in g) for k, g in __import__("itertools").groupby(p["ranks"]) if k == 1), default=0) for p in data["poolers"])
+    assert recs["first"]["value"] == longest
+    assert all(r["who"] in by_id and isinstance(r["new"], bool) and r["text"] for r in data["records"])
+
+
 def test_page_has_the_team_card(built):
     _, _, data = built
     page = render(data)
