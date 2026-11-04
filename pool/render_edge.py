@@ -33,7 +33,10 @@ __FONTS__
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Barlow',system-ui,sans-serif;font-size:16px;-webkit-text-size-adjust:100%}
 button{font:inherit;color:inherit;border:0;background:transparent;padding:0;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.app{height:100vh;height:100dvh;max-width:520px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 16px 0;display:flex;flex-direction:column;gap:10px}
+/* The app is pinned to the visible screen edges (position:fixed + inset 0) instead of 100vh/100dvh: on a home-screen
+   install the phone reports a taller viewport than what is visible, which pushed the tab bar off the bottom. */
+html,body{height:100%;overflow:hidden}
+.app{position:fixed;top:0;right:0;bottom:0;left:0;max-width:520px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 16px 0;display:flex;flex-direction:column;gap:10px}
 /* top bar: brand on tabs, "‹ Retour" + title on screens */
 .top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;min-height:46px}
 .brand{font:800 19px 'Barlow Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase}.brand b{color:var(--accent)}
