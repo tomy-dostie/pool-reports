@@ -184,7 +184,7 @@ def season_records(roster, results, game_days, lines_by_day, names, upto=None):
                 if top is None or pts > top[0]:
                     top = (pts, i, d, pid, nm)
     if top:
-        out.append({"key": "player", "label": "Meilleur match d’un joueur", "value": top[0], "who": top[1], "pid": top[3],
+        out.append({"key": "player", "label": "Meilleure partie d’un joueur", "value": top[0], "who": top[1], "pid": top[3],
                     "text": f"{top[0]} pts : {top[4].split(' ')[-1]} pour {names[top[1]]}, {_short(top[2])}"})
     # longest run at 1st place (ties at 1st count), and biggest climb after the first 5 game days
     run = {i: 0 for i in ids}
@@ -224,7 +224,7 @@ def season_records(roster, results, game_days, lines_by_day, names, upto=None):
                     streak = (c, p.id, s.name)
     if streak and streak[0] >= 3:
         out.append({"key": "streak", "label": "Plus longue séquence d’un joueur", "value": streak[0], "who": streak[1],
-                    "text": f"{streak[2].split(' ')[-1]} ({names[streak[1]]}) : {streak[0]} matchs de suite avec un point"})
+                    "text": f"{streak[2].split(' ')[-1]} ({names[streak[1]]}) : {streak[0]} parties de suite avec un point"})
     return out
 
 
@@ -446,7 +446,7 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
                 break
         g, a = sum(h[2] for h in recent), sum(h[3] for h in recent)
         team = hist[-1][5]
-        meta = f"{team} · série de {streak} matchs" if streak >= 3 else f"{team} · {_ga(g, a)}"
+        meta = f"{team} · séquence de {streak} parties" if streak >= 3 else f"{team} · {_ga(g, a)}"
         deals.append({"player": full_name(pid, hist[-1][4]), "meta": meta, "pts": pts, "hot": streak >= 3, "pct": league.get(pid, (None, None))[1], "_s": (-pts, -streak, hist[-1][4])})
     deals.sort(key=lambda x: x["_s"])
     deals = deals[:5]
@@ -460,7 +460,7 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
                 continue
             last5 = history[s.player_id][-5:]
             if len(last5) >= 4 and sum(h[1] for h in last5) == 0 and (last_day - last5[-1][0]).days <= 7:
-                cold.append({"player": s.name, "owner": p.name, "line": f"0 pt en {len(last5)} matchs", "_n": len(last5)})
+                cold.append({"player": s.name, "owner": p.name, "line": f"0 pt en {len(last5)} parties", "_n": len(last5)})
     cold.sort(key=lambda x: (-x["_n"], x["player"]))
     cold = cold[:3]
     for c in cold:
@@ -473,7 +473,7 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
     movers = [p for p in poolers if p["move"] > 0]
     top_mover = max(movers, key=lambda p: (p["move"], p["yday"])) if movers else None
     if not game_days:
-        headline = {"title": "La saison démarre bientôt", "text": "Aucun match joué pour l’instant."}
+        headline = {"title": "La saison s’en vient", "text": "Pas une partie de jouée encore."}
     elif len(leaders) > 1:
         headline = {"title": "Égalité au sommet", "text": f"{_names([p['name'] for p in leaders])} sont à égalité avec {leaders[0]['total']} points."}
     else:
@@ -486,7 +486,7 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
         headline = {"title": f"{lead['name']} prend le sommet" if took else f"{lead['name']} garde le sommet", "text": text}
     tiles = [
         {"value": str(pool_points), "label": "points dans le pool"},
-        {"value": str(n_games), "label": _plural(n_games, "match joué", "matchs joués")},
+        {"value": str(n_games), "label": _plural(n_games, "partie jouée", "parties jouées")},
         {"value": f"+{top_mover['move']}" if top_mover else "0", "label": f"{_plural(top_mover['move'], 'rang', 'rangs')} pour {top_mover['name']}" if top_mover else "changement au classement"},
     ]
 
@@ -512,11 +512,11 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
             chatter.append({"tag": "En feu", "good": True, "name": hot["name"], "color": hot["color"],
                             "text": f"{hot['name']} a ramassé {last3[hot['id']]} points en 3 soirs, le meilleur rendement du pool."})
             chatter.append({"tag": "Au frette", "good": False, "name": cold_p["name"], "color": cold_p["color"],
-                            "text": f"{cold_p['name']} n’a que {last3[cold_p['id']]} points en 3 soirs, le pire du pool. Une transaction s’impose."})
+                            "text": f"{cold_p['name']} a juste {last3[cold_p['id']]} points en 3 soirs, le pire du pool. Un échange s’impose."})
     close = [p for p in poolers[1:3] if 0 < p["gap"] <= 6]
     if close and len(leaders) == 1:
         c = close[0]
-        chatter.append({"tag": "Dans le rétroviseur", "good": True, "name": c["name"], "color": c["color"], "text": f"{c['name']} n’est qu’à {c['gap']} {_plural(c['gap'], 'point', 'points')} du sommet. Rien n’est joué."})
+        chatter.append({"tag": "Dans le rétroviseur", "good": True, "name": c["name"], "color": c["color"], "text": f"{c['name']} est juste à {c['gap']} {_plural(c['gap'], 'point', 'points')} du sommet. C’est loin d’être fini."})
     if top_mover and top_mover["move"] >= 2:
         chatter.append({"tag": "Remontée", "good": True, "name": top_mover["name"], "color": top_mover["color"], "text": f"{top_mover['name']} gagne {top_mover['move']} rangs en une soirée."})
     # the longest current run of nights won by one pooler against another
@@ -525,7 +525,7 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
         s, a, b = runs[0]
         pa = next(p for p in poolers if p["id"] == a)
         chatter.insert(min(2, len(chatter)), {"tag": "Bête noire", "good": True, "name": names[a], "color": pa["color"],
-                       "text": f"{names[a]} bat {names[b]} {s} soirs de suite. Quelqu’un doit arrêter ça."})
+                       "text": f"{names[a]} bat {names[b]} {s} soirs de suite. Faudrait ben que quelqu’un l’arrête."})
 
     # every completed move (one out, one in), judged by what each player did afterwards
     trades = []

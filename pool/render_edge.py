@@ -163,7 +163,7 @@ window.DATA = __DATA__;
     ['accueil', 'Accueil', 'M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'],
     ['moi', 'Moi', 'M16 8a4 4 0 1 1-8 0a4 4 0 1 1 8 0M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6'],
     ['classement', 'Classement', 'M3 21V13h5v8M9.5 21V5h5v16M16 21v-6h5v6M2 21h20'],
-    ['marche', 'Marché', 'M4 8h15l-4-4M20 16H5l4 4'],
+    ['marche', 'Waivers', 'M4 8h15l-4-4M20 16H5l4 4'],
     ['prix', 'Prix', 'M17 15a5 5 0 1 1-10 0a5 5 0 1 1 10 0M8.5 11 6 3h4l2 5 2-5h4l-2.5 8']
   ];
   var SUBS = [['resume', 'Résumé'], ['alignement', 'Alignement'], ['duels', 'Duels'], ['mouvements', 'Mouvements']];
@@ -251,10 +251,10 @@ window.DATA = __DATA__;
   function welcome() {
     var s = el('div', 'welcome');
     add(s, el('div', 'kick', 'Bienvenue dans le pool'), el('h1', null, 'T’es qui ?'),
-      el('p', 'sub', 'Choisis ton nom une fois. La page s’ouvrira sur ton équipe et te dira ce qui a changé depuis ta dernière visite. Pas de compte, rien n’est envoyé : c’est gardé sur ton téléphone.'),
+      el('p', 'sub', 'Choisis ton nom une fois pis la page va s’ouvrir sur ton équipe, avec ce qui a changé depuis ta dernière visite. Pas de compte, rien est envoyé : c’est gardé dans ton téléphone.'),
       picker(function (id) {
         setMe(id); var from = route.from || 'accueil';
-        toast('Salut ' + byId(id).name + ' ! La page s’ouvre maintenant sur ton équipe.');
+        toast('Salut ' + byId(id).name + ' ! La page va s’ouvrir sur ton équipe.');
         if (route.depth > 0) goBack(); else nav({ tab: from }, false);
       }));
     var spec = el('button', 'link', 'Je regarde juste ›');
@@ -301,16 +301,16 @@ window.DATA = __DATA__;
       if (was < base.t[q.id] && p.total > q.total) passed.push(q.name);
       if (was > base.t[q.id] && p.total < q.total) passedBy.push(q.name);
     });
-    if (p.rank === 1 && wasRk > 1) li('👑', 'Tu prends le 1er rang.', 'mv-up');
-    if (passed.length) li('▲', 'Tu as dépassé ' + passed.join(', ') + '.', 'mv-up');
+    if (p.rank === 1 && wasRk > 1) li('👑', 'T’es rendu 1er !', 'mv-up');
+    if (passed.length) li('▲', 'T’as dépassé ' + passed.join(', ') + '.', 'mv-up');
     if (passedBy.length) li('▼', passedBy.join(', ') + ' ' + (passedBy.length > 1 ? 't’ont' : 't’a') + ' dépassé.', 'mv-down');
     var leaderWas = Math.max.apply(null, P.map(function (q) { return base.t[q.id] || 0; })), gapWas = leaderWas - was;
-    if (p.rank > 1 && gapWas !== p.gap) li('↔', 'Écart avec le 1er : ' + gapWas + ' → ' + p.gap + (p.gap < gapWas ? '. Ça se rapproche.' : '.'));
+    if (p.rank > 1 && gapWas !== p.gap) li('↔', 'Écart avec le 1er : ' + gapWas + ' → ' + p.gap + (p.gap < gapWas ? '. Ça se resserre.' : '.'));
     var mine = base.pl[p.id] || {}, deltas = [];
     p.team.concat(p.former).forEach(function (x) { var d = x.pts - (mine[x.player] || 0); if (d > 0) deltas.push([d, x.player]); });
     deltas.sort(function (a, b) { return b[0] - a[0]; });
     if (deltas.length) li('★', deltas.slice(0, 3).map(function (d) { return last(d[1]) + ' +' + d[0]; }).join(' · '));
-    else if (gained === 0) li('·', 'Aucun point depuis. On se reprend ce soir.');
+    else if (gained === 0) li('·', 'Pas un point depuis. On se reprend à soir.');
     if (ul.childNodes.length) add(box, ul);
     add(box, el('div', 'small', 'Résultats du ' + base.label + ' au ' + M.lastDayLabel + '.'));
     animate = false;                                                  // coming back to this screen later: no replay
@@ -336,20 +336,20 @@ window.DATA = __DATA__;
     var mine = known ? L.poolers.filter(function (r) { return r.id === me; })[0] : null;
     if (mine) {
       var n = el('span', 'num', '+' + mine.tonight); n.style.fontSize = '42px'; n.style.color = mine.tonight ? 'var(--text)' : 'var(--muted)';
-      var line = add(el('div'), n, txt('  ce soir · ' + ord(mine.rank) + ' provisoire'));
+      var line = add(el('div'), n, txt('  à soir · ' + ord(mine.rank) + ' provisoire'));
       if (mine.move) add(line, el('span', mine.move > 0 ? 'mv-up' : 'mv-down', mine.move > 0 ? ' ▲' + mine.move : ' ▼' + (-mine.move)));
       add(box, line);
     }
     var top = L.poolers.slice().sort(function (a, b) { return b.tonight - a.tonight || (a.name < b.name ? -1 : 1); }).slice(0, 3).filter(function (r) { return r.tonight > 0; });
-    if (top.length) add(box, el('div', null, 'Ce soir : ' + top.map(function (r) { return r.name + ' +' + r.tonight; }).join(' · ')));
+    if (top.length) add(box, el('div', null, 'À soir : ' + top.map(function (r) { return r.name + ' +' + r.tonight; }).join(' · ')));
     var b = el('button', 'btn hot', 'Voir le direct ›'); b.onclick = openLive;
     return add(box, b);
   }
   function liveView() {
     var s = el('div', 'stack'), L = D.live, m = liveAge();
     add(s, add(el('div', 'livehd'), onAir(L), el('span', 'small', 'màj ' + L.updated + ' · ' + ago(m))), el('h1', null, 'Soirée du ' + L.dayLabel), el('p', 'sub', liveStatus(L)));
-    if (m != null && m > 35 && !L.allDone) add(s, el('p', 'alert', 'Le direct a du retard (la mise à jour se fait aux 15 min environ). Les points arrivent.'));
-    if (L.failed) add(s, el('p', 'alert', L.failed + ' match(s) pas encore chargé(s) : points incomplets.'));
+    if (m != null && m > 35 && !L.allDone) add(s, el('p', 'alert', 'Le direct est en retard (ça se met à jour aux 15 min à peu près). Les points s’en viennent.'));
+    if (L.failed) add(s, el('p', 'alert', L.failed + ' partie(s) pas encore rentrée(s) : y manque des points.'));
     add(s, el('h2', null, 'Classement provisoire'));
     var lb = el('div', 'panel rows');
     L.poolers.forEach(function (r) {
@@ -365,19 +365,19 @@ window.DATA = __DATA__;
       if (liveSel === r.id) {
         var det = el('div', 'lvs');
         if (r.scorers.length) r.scorers.forEach(function (x) { add(det, el('div', null, x.player + ' (' + x.team + ') · ' + x.line + ' · +' + x.pts)); });
-        else add(det, el('div', null, 'Aucun point pour l’instant.'));
+        else add(det, el('div', null, 'Pas de points pour l’instant.'));
         var go = el('button', 'link', 'Voir le profil de ' + r.name + ' ›'); go.onclick = function () { openPooler(r.id); };
         lb.appendChild(add(det, go));
       }
     });
-    add(s, lb, el('p', 'small', 'Touche un pooler pour voir ses marqueurs. Rang provisoire = total de ce matin + points de ce soir.'));
-    add(s, el('h2', null, 'Matchs'));
+    add(s, lb, el('p', 'small', 'Touche un pooler pour voir ses marqueurs. Rang provisoire = total de ce matin + points d’à soir.'));
+    add(s, el('h2', null, 'Parties'));
     var gl = el('div', 'panel rows');
     L.games.forEach(function (g) {
       var started = g.live || g.final;
       add(gl, add(el('div', 'gm' + (g.live ? ' on' : '')), el('span', 'sc', started ? g.away + ' ' + g.as + ' – ' + g.hs + ' ' + g.home : g.away + ' à ' + g.home), el('span', 'st', g.status)));
     });
-    add(s, gl, el('p', 'small', 'Provisoire. Les points officiels arrivent demain matin dans le rapport. Mise à jour aux 15 minutes environ.'));
+    add(s, gl, el('p', 'small', 'C’est provisoire : les vrais points rentrent demain matin. Mise à jour aux 15 minutes à peu près.'));
     return s;
   }
   function refreshLive() {
@@ -398,8 +398,8 @@ window.DATA = __DATA__;
     if (installEvt) {
       var b = el('button', 'btn main', 'Installer l’app');
       b.onclick = function () { installEvt.prompt(); installEvt = null; render(true); };
-      add(box, el('p', 'sub', 'Une icône, plein écran, un tap le matin.'), b);
-    } else add(box, el('p', 'sub', 'Sur iPhone : touche Partager (le carré avec la flèche), puis « Sur l’écran d’accueil ». Ça ouvre le pool en plein écran, comme une app.'));
+      add(box, el('p', 'sub', 'Une icône, plein écran, pis un tap le matin.'), b);
+    } else add(box, el('p', 'sub', 'Sur iPhone : touche Partager (le carré avec la flèche), pis « Sur l’écran d’accueil ». Ça ouvre le pool en plein écran, comme une app.'));
     var no = el('button', 'link', 'Non merci'); no.onclick = function () { setRaw('pool.install', 'non'); render(true); };
     return add(box, no);
   }
@@ -419,10 +419,10 @@ window.DATA = __DATA__;
   function tiles(p) { var t = el('div', 'tiles'); KPI.forEach(function (k) { t.appendChild(tile(k[1], k[0], p)); }); return t; }
   function pctRow(pct, ppg) {
     var r = el('div', 'pct');
-    if (pct == null) { add(r, el('span', null, 'Rang LNH'), el('span', null, 'moins de 5 matchs'), el('b')); return r; }
+    if (pct == null) { add(r, el('span', null, 'Rang LNH'), el('span', null, 'moins de 5 parties'), el('b')); return r; }
     var b = el('b', null, ord(pct)); b.style.color = tier(pct);
-    add(r, el('span', null, ppg == null ? 'Rang LNH' : dec(ppg) + ' pt/match'), track(pct / 100, tier(pct)), b);
-    r.title = 'Centile parmi les joueurs de la LNH à la même position (points par match, saison)';
+    add(r, el('span', null, ppg == null ? 'Rang LNH' : dec(ppg) + ' pt/partie'), track(pct / 100, tier(pct)), b);
+    r.title = 'Centile parmi les joueurs de la LNH à la même position (points par partie, saison)';
     return r;
   }
   function seg(opts, cur, pick, label) {
@@ -491,9 +491,9 @@ window.DATA = __DATA__;
     function li(text, cls) { ul.appendChild(el('li', cls || null, text)); }
     var c = x.chase;
     if (c && c.kind === 'catch') li((mine ? 'Tu passes ' : p.name + ' passe ') + c.name + ' vers le ' + c.date + ' (+' + dec(c.gain) + ' pt par jour sur ' + c.name + ').', 'mv-up');
-    if (c && c.kind === 'threat') li(c.name + (mine ? ' te rattrape' : ' rattrape ' + p.name) + ' vers le ' + c.date + ' s’il garde ce rythme (+' + dec(c.gain) + ' pt par jour).', 'mv-down');
-    if (!c && p.rank > 1) li((mine ? 'Tu ne rattrapes' : p.name + ' ne rattrape') + ' personne à ce rythme. Il faut accélérer.');
-    if (!c && p.rank === 1) li(mine ? 'Personne ne te rattrape à ce rythme.' : 'Personne ne rattrape ' + p.name + ' à ce rythme.', 'mv-up');
+    if (c && c.kind === 'threat') li(c.name + (mine ? ' te rattrape' : ' rattrape ' + p.name) + ' vers le ' + c.date + ' s’il garde le rythme (+' + dec(c.gain) + ' pt par jour).', 'mv-down');
+    if (!c && p.rank > 1) li((mine ? 'Tu rattrapes' : p.name + ' rattrape') + ' personne à ce rythme-là. Faut que ça débloque.');
+    if (!c && p.rank === 1) li(mine ? 'Personne te rattrape à ce rythme-là.' : 'Personne rattrape ' + p.name + ' à ce rythme-là.', 'mv-up');
     if (x.milestone) li('Cap des ' + x.milestone.value + ' pts vers le ' + x.milestone.date + (/\.$/.test(x.milestone.date) ? '' : '.'));
     return add(el('div', 'panel lead'), el('div', 'kick', 'À ce rythme · ' + dec(x.rate) + ' pts par jour (14 j)'), ul);
   }
@@ -514,7 +514,7 @@ window.DATA = __DATA__;
       add(leg, add(el('span'), d, txt(last(x.player) + ' '), el('b', null, x.pct + ' %')));
     });
     if (rest > 0) { var o = el('div'); o.style.flex = String(rest); o.style.background = 'var(--mid)'; o.style.opacity = '.5'; bar.appendChild(o); add(leg, el('span', 'small', 'Autres ' + Math.round(100 * rest / p.total) + ' %')); }
-    var lead = top[0], say = lead.pct >= 20 ? 'Sans ' + last(lead.player) + ', ça irait mal.' : lead.pct <= 12 ? 'Une équipe balancée : personne ne porte tout.' : last(lead.player) + ' mène la charge.';
+    var lead = top[0], say = lead.pct >= 20 ? 'Sans ' + last(lead.player) + ', ça irait pas ben.' : lead.pct <= 12 ? 'Une équipe balancée : personne porte toute la charge.' : last(lead.player) + ' mène le bal.';
     return add(el('div', 'stack'), el('h2', null, 'Qui porte l’équipe'), add(el('div', 'panel lead'), bar, leg, el('p', 'small', say)));
   }
   // tonight: the game with the most pool players, and how many players each pooler has in action
@@ -522,8 +522,8 @@ window.DATA = __DATA__;
     var c = D.tonightClash, ld = P.map(function (p) { return { p: p, n: p.tonight.length }; }).filter(function (x) { return x.n; }).sort(function (a, b) { return b.n - a.n || (a.p.name < b.p.name ? -1 : 1); });
     if (!c && !ld.length) return null;
     var box = el('div', 'panel lead');
-    add(box, el('div', 'kick', 'Ce soir · ' + M.gamesTonight + ' ' + plural(M.gamesTonight, 'match', 'matchs')));
-    if (c) add(box, el('div', 't', 'Le choc : ' + c.game), el('p', 'small', c.time + ' · ' + c.players + ' joueurs du pool : ' + c.poolers.map(function (x) { return x.name + ' ' + x.n; }).join(', ')));
+    add(box, el('div', 'kick', 'Ce soir · ' + M.gamesTonight + ' ' + plural(M.gamesTonight, 'partie', 'parties')));
+    if (c) add(box, el('div', 't', 'La grosse partie : ' + c.game), el('p', 'small', c.time + ' · ' + c.players + ' joueurs du pool : ' + c.poolers.map(function (x) { return x.name + ' ' + x.n; }).join(', ')));
     if (ld.length) {
       var w = el('div'); w.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
       ld.forEach(function (x) { var t = el('span', 'tag', x.p.name + ' ' + x.n); if (known && x.p.id === me) { t.style.background = x.p.color; t.style.color = 'var(--ink)'; } w.appendChild(t); });
@@ -543,7 +543,7 @@ window.DATA = __DATA__;
       mc.onclick = function () { openPooler(p.id); };
       add(s, mc, sincePanel(p));
     } else {
-      var w = add(el('div', 'panel lead'), el('div', 't', 'T’es qui ?'), el('p', 'small', 'Choisis ton nom pour voir ta soirée et ce qui a changé depuis ta dernière visite.'));
+      var w = add(el('div', 'panel lead'), el('div', 't', 'T’es qui ?'), el('p', 'small', 'Choisis ton nom pour voir ta soirée pis ce qui a changé depuis ta dernière visite.'));
       var bw = el('button', 'btn main', 'Choisir mon nom ›'); bw.onclick = openWho; add(s, add(w, bw));
     }
     var hl = add(el('div', 'panel lead'), el('div', 't', D.headline.title), el('p', null, D.headline.text));
@@ -560,7 +560,7 @@ window.DATA = __DATA__;
       add(s, el('h2', null, 'Mouvements récents'), c);
     }
     add(s, installPanel());
-    if (M.missingGames) add(s, el('p', 'alert', M.missingGames + ' match(s) non chargé(s) : points possiblement incomplets.'));
+    if (M.missingGames) add(s, el('p', 'alert', M.missingGames + ' partie(s) pas rentrée(s) : y manque peut-être des points.'));
     if (M.unresolved && M.unresolved.length) add(s, el('p', 'alert', 'Joueur non reconnu, points possiblement incomplets : ' + M.unresolved.join(', ') + '.'));
     add(s, el('p', 'small', 'Mis à jour le ' + M.updated + '.'));
     return s;
@@ -570,7 +570,7 @@ window.DATA = __DATA__;
   function mine() {
     var s = el('div', 'stack');
     if (!known) {
-      add(s, el('h1', null, 'Ma soirée'), el('p', 'sub', 'Choisis ton nom pour voir ta soirée. C’est gardé sur ton téléphone, rien n’est envoyé.'),
+      add(s, el('h1', null, 'Ma soirée'), el('p', 'sub', 'Choisis ton nom pour voir ta soirée. C’est gardé dans ton téléphone, rien est envoyé.'),
         picker(function (id) { setMe(id); toast('Salut ' + byId(id).name + ' !'); render(); }));
       return s;
     }
@@ -580,15 +580,15 @@ window.DATA = __DATA__;
     add(s, el('h2', null, 'Hier soir · +' + p.yday));
     var l = el('div', 'panel rows');
     if (p.scorers.length) p.scorers.forEach(function (x) { add(l, add(el('div', 'pl'), add(el('span'), el('div', 'nm', x.player), el('div', 'small', x.line)), add(el('span', 'pp'), el('span', 'num', String(x.pts))))); });
-    else add(l, add(el('div', 'pl'), el('span', 'small', 'Personne n’a pointé. Soirée difficile.')));
+    else add(l, add(el('div', 'pl'), el('span', 'small', 'Personne a fait de points. Soirée ordinaire.')));
     add(s, l, el('h2', null, 'Ce soir · ' + (p.tonight.length ? p.tonight.length + ' ' + plural(p.tonight.length, 'joueur', 'joueurs') : 'aucun joueur')));
     if (p.tonight.length) {
       var more = 1 + P.filter(function (q) { return q.tonight.length > p.tonight.length; }).length;
-      add(s, el('p', 'small', more === 1 ? 'Le plus gros alignement en action ce soir. À toi de jouer.' : ord(more) + ' plus gros alignement en action ce soir.'));
+      add(s, el('p', 'small', more === 1 ? 'Le plus gros alignement en action à soir. C’est ta soirée.' : ord(more) + ' plus gros alignement en action à soir.'));
     }
     if (D.tonightClash && D.tonightClash.poolers.some(function (x) { return x.id === p.id; })) {
       var c = D.tonightClash, foes = c.poolers.filter(function (x) { return x.id !== p.id; }).map(function (x) { return x.name; });
-      if (foes.length) add(s, el('p', 'small', 'Le choc de la soirée (' + c.game + ') : tu y affrontes ' + foes.join(', ') + '.'));
+      if (foes.length) add(s, el('p', 'small', 'Grosse partie à soir (' + c.game + ') : t’affrontes ' + foes.join(', ') + '.'));
     }
     if (p.tonight.length) { var g = el('div', 'panel rows'); p.tonight.forEach(function (x) { add(g, add(el('div', 'pl'), add(el('span'), el('div', 'nm', x.player), el('div', 'small', x.game)), add(el('span', 'pp'), el('span', 'num', x.time)))); }); add(s, g); }
     var b = el('button', 'btn main', 'Mon équipe ›'); b.onclick = function () { openPooler(me); }; add(s, b);
@@ -601,7 +601,7 @@ window.DATA = __DATA__;
     add(s, el('h1', null, 'Classement'), seg(KPI, raceKey, function (k) { raceKey = k; render(true); }, 'Trier le classement'));
     var mx = maxOf(raceKey), rows = P.slice().sort(function (a, b) { return a.kpi[raceKey].rank - b.kpi[raceKey].rank || (a.name < b.name ? -1 : 1); });
     var lb = el('div', 'panel rows'); rows.forEach(function (p) { lb.appendChild(lbRow(p, raceKey, mx)); });
-    add(s, lb, el('p', 'small', 'Touche un pooler pour voir son équipe. Trait blanc : moyenne du pool. Projection sur ' + M.seasonGames + ' matchs.'));
+    add(s, lb, el('p', 'small', 'Touche un pooler pour voir son équipe. Trait blanc : moyenne du pool. Projection sur ' + M.seasonGames + ' parties.'));
     return s;
   }
 
@@ -614,7 +614,7 @@ window.DATA = __DATA__;
     if (sub === 'resume') {
       add(s, tiles(p), pacePanel(p, mineToo), el('h2', null, 'Progression de la saison'), chartBlock([p.id]), carry(p));
     } else if (sub === 'alignement') {
-      add(s, el('h2', null, 'Actifs · ' + p.team.length), seg([['pts', 'Points'], ['ppg', 'Pts/match'], ['last7', '7 jours']], sortKey, function (k) { sortKey = k; render(true); }, 'Trier les joueurs'));
+      add(s, el('h2', null, 'Actifs · ' + p.team.length), seg([['pts', 'Points'], ['ppg', 'Pts/partie'], ['last7', '7 jours']], sortKey, function (k) { sortKey = k; render(true); }, 'Trier les joueurs'));
       var rows = p.team.slice().sort(function (a, b) { return (b[sortKey] || 0) - (a[sortKey] || 0) || b.pts - a.pts; });
       var l = el('div', 'panel rows');
       rows.forEach(function (r) {
@@ -622,7 +622,7 @@ window.DATA = __DATA__;
         if (r.last7 > 0) right.lastChild.style.color = 'var(--accent)';
         add(l, add(el('div', 'pl'), el('div', 'nm', r.player), right, el('div', 'small', r.team + ' · ' + r.pos + ' · ' + r.gp + ' PJ · ' + r.g + ' B · ' + r.a + ' A'), pctRow(r.pct, r.ppg)));
       });
-      add(s, l, el('p', 'small', 'Barre : rang LNH en points par match cette saison, parmi les joueurs à la même position (100 = le meilleur). Points du pool : seulement pendant qu’il appartient à ' + p.name + '.'));
+      add(s, l, el('p', 'small', 'Barre : rang LNH en points par partie cette saison, parmi les joueurs à la même position (100 = le meilleur). Points du pool : seulement pendant qu’il appartient à ' + p.name + '.'));
       if (p.former.length) {
         var f = el('div', 'panel rows');
         p.former.forEach(function (r) {
@@ -645,7 +645,7 @@ window.DATA = __DATA__;
         if (x.out) det.push(x.outPts + ' ' + plural(x.outPts, 'pt gardé', 'pts gardés'));
         add(m, add(el('div', 'mvr'), el('b', null, x.dateLabel), add(el('span'), add(el('div', 'nm wrapt'), txt(what + ' '), verdict(x)), el('div', 'small', det.join(' · ')))));
       });
-      else add(m, add(el('div', 'mvr'), el('b', null, '–'), el('span', 'small', 'Aucun mouvement cette saison.')));
+      else add(m, add(el('div', 'mvr'), el('b', null, '–'), el('span', 'small', 'Pas de mouvement cette saison.')));
       add(s, el('h2', null, 'Mouvements'), m, el('p', 'small', 'Bon coup / Regret : points du nouveau joueur ici, contre les points de l’ancien depuis son départ.'));
     }
     return s;
@@ -706,10 +706,10 @@ window.DATA = __DATA__;
   // ---------------------------------------------------------------- tab: Marché
   function market() {
     var s = el('div', 'stack');
-    add(s, el('h1', null, 'Marché'), el('h2', null, 'Agents libres'), el('p', 'sub', 'Les meilleurs joueurs de la semaine que personne n’a.'));
+    add(s, el('h1', null, 'Waivers'), el('h2', null, 'Agents libres'), el('p', 'sub', 'Les meilleurs joueurs de la semaine que personne a pris.'));
     var l = el('div', 'panel rows');
     if (D.deals.length) D.deals.forEach(function (d) { add(l, add(el('div', 'pl'), el('div', 'nm', d.player), add(el('span', 'pp'), el('span', 'num', '+' + d.pts), el('span', 'small', '7 derniers jours')), el('div', 'small', d.meta), pctRow(d.pct, null))); });
-    else add(l, add(el('div', 'pl'), el('span', 'small', 'Pas encore assez de matchs.')));
+    else add(l, add(el('div', 'pl'), el('span', 'small', 'Pas encore assez de parties.')));
     add(s, l);
     if (D.cold.length) {
       var c = el('div', 'panel rows');
@@ -719,7 +719,7 @@ window.DATA = __DATA__;
         if (o) r.onclick = function () { openPooler(o.id, 'alignement'); };
         c.appendChild(r);
       });
-      add(s, el('h2', null, 'Sur la glace mince'), c);
+      add(s, el('h2', null, 'En panne sèche'), c);
     }
     var T = D.trades || [];
     if (T.length) {
@@ -820,7 +820,7 @@ window.DATA = __DATA__;
     try { drawTabs(); } catch (e) {}
     try { drawTop(); } catch (e) {}
     try { content = view(); } catch (e) {
-      content = add(el('div', 'stack'), el('h1', null, 'Oups'), el('p', 'sub', 'Cette section n’a pas pu s’afficher. Les autres onglets fonctionnent.'), el('p', 'small', String(e && e.message || e)));
+      content = add(el('div', 'stack'), el('h1', null, 'Oups'), el('p', 'sub', 'Cette section a pas voulu s’afficher. Les autres onglets marchent.'), el('p', 'small', String(e && e.message || e)));
       var home_ = el('button', 'btn main', 'Retour à l’accueil'); home_.onclick = function () { openTab('accueil'); }; content.appendChild(home_);
     }
     c.className = 'card' + (keep ? '' : ' in'); c.textContent = ''; c.appendChild(content);

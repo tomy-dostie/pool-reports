@@ -31,11 +31,11 @@ def signature(games):
 
 def _status(g):
     if g.is_final:
-        return "Final" + (" (prol.)" if g.period_type == "OT" else " (t.b.)" if g.period_type == "SO" else "")
+        return "Final" + (" (prol.)" if g.period_type == "OT" else " (fus.)" if g.period_type == "SO" else "")
     if g.started:
         if g.intermission:
             return f"Entracte {g.period}" if g.period <= 3 else "Entracte"
-        per = {1: "1re", 2: "2e", 3: "3e"}.get(g.period, "Prol." if g.period_type == "OT" else "T.b." if g.period_type == "SO" else f"{g.period}e")
+        per = {1: "1re", 2: "2e", 3: "3e"}.get(g.period, "Prol." if g.period_type == "OT" else "Fus." if g.period_type == "SO" else f"{g.period}e")
         return f"{per} · {g.clock}" if g.clock else per
     return _clock(g.start_utc) if g.start_utc else "À venir"
 

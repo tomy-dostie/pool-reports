@@ -286,7 +286,7 @@ def test_tiles_trend_and_preview_page(built):
     assert "T’es qui ?" in page and "Depuis ta dernière visite" in page and "Bons coups et regrets" in page
     assert ".innerHTML" not in page
     # bottom tab bar + routes kept in the browser history (back gesture works)
-    for label in ("'Accueil'", "'Moi'", "'Classement'", "'Marché'", "'Prix'", "‹ Retour", "history.pushState", "popstate"):
+    for label in ("'Accueil'", "'Moi'", "'Classement'", "'Waivers'", "'Prix'", "‹ Retour", "history.pushState", "popstate"):
         assert label in page
     for route in ("'#pooler/'", "'#duel/'", "parts[0] === 'direct'", "parts[0] === 'equipe'"):
         assert route in page
