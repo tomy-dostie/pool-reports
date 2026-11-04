@@ -285,6 +285,11 @@ def test_tiles_trend_and_preview_page(built):
     assert page.count("</script>") == 1 and "url(fonts/barlow-400.woff2)" in page and "googleapis" not in page
     assert "T’es qui ?" in page and "Depuis ta dernière visite" in page and "Bons coups et regrets" in page
     assert ".innerHTML" not in page
+    # bottom tab bar + routes kept in the browser history (back gesture works)
+    for label in ("'Accueil'", "'Moi'", "'Classement'", "'Marché'", "'Prix'", "‹ Retour", "history.pushState", "popstate"):
+        assert label in page
+    for route in ("'#pooler/'", "'#duel/'", "parts[0] === 'direct'", "parts[0] === 'equipe'"):
+        assert route in page
 
 
 def test_build_writes_new_main_page_classic_fallback_and_redirect(tmp_path):
