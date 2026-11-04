@@ -84,7 +84,7 @@ def main(argv=None):
     # check
     expected = json.load(open(a.expected, encoding="utf-8"))
     through = date.fromisoformat(expected["through"])
-    from .nhl import TEAM_CODES, resolve_ids
+    from .nhl import resolve_ids
     client = NhlClient(a.cache)
     directory = [p for t in TEAM_CODES for p in client.roster(t)]
     problems = resolve_ids(roster, directory)

@@ -36,7 +36,7 @@ class SyntheticClient:
             if self.live and d == self.today:
                 state = ("OFF", "LIVE", "LIVE", "FUT")[(i // 2) % 4]
             g = Game(int(d.strftime("%Y%m%d")) * 100 + i // 2, d, state, 2, playing[i], playing[i + 1], start)
-            if g.started:
+            if self.live and d == self.today and g.started:      # scoreboard only matters for the live night
                 lines = self.boxscore(g)
                 g.away_score = sum(l.goals for l in lines if l.team == g.away)
                 g.home_score = sum(l.goals for l in lines if l.team == g.home)
