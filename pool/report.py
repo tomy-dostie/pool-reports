@@ -92,14 +92,24 @@ def team_sheet(pooler, roster, lines_by_day, game_days, last_day, directory, tod
             gp, g, a, pts = gp + 1, g + l.goals, a + l.assists, pts + p
             if d >= week_start:
                 last7 += p
+        after = None                                    # points scored since this pooler let him go (drop day included)
+        if s.dropped_on is not None:
+            after = 0
+            for d in game_days:
+                if s.dropped_on <= d <= last_day:
+                    l = find_line(s, lines_by_day[d], [])
+                    if l is not None:
+                        after += l.goals * roster.goal_points + l.assists * roster.assist_points
         dp = directory.get(s.player_id)
         ppg, pct = (league or {}).get(s.player_id, (None, None))
         rows.append((s, {"player": dp.name if dp else s.name, "team": dp.team if dp else s.team,
                          "pos": "Déf" if s.position == "D" else "Att", "gp": gp, "g": g, "a": a, "pts": pts, "last7": last7,
-                         "ppg": ppg, "pct": pct}))
+                         "ppg": ppg, "pct": pct}, after))
+    after = {id(r): a for _, r, a in rows}
+    rows = [(s, r) for s, r, _ in rows]
 
     team = sorted((r for s, r in rows if s.dropped_on is None), key=lambda r: (-r["pts"], -r["gp"], r["player"]))
-    former = sorted(({**r, "until": _short(s.dropped_on - timedelta(days=1)), "_d": s.dropped_on}
+    former = sorted(({**r, "until": _short(s.dropped_on - timedelta(days=1)), "after": after[id(r)], "_d": s.dropped_on}
                      for s, r in rows if s.dropped_on is not None), key=lambda r: (r["_d"], r["player"]), reverse=True)
     for r in former:
         del r["_d"]
@@ -112,9 +122,9 @@ def team_sheet(pooler, roster, lines_by_day, game_days, last_day, directory, tod
         j = next((k for k, (t, _) in enumerate(adds) if t.added_on == s.dropped_on), None)
         new = adds.pop(j)[1] if j is not None else None
         moves.append({"date": s.dropped_on.isoformat(), "dateLabel": _short(s.dropped_on), "out": r["player"], "outPts": r["pts"],
-                      "in": new["player"] if new else None, "inPts": new["pts"] if new else None})
+                      "outAfter": after[id(r)], "in": new["player"] if new else None, "inPts": new["pts"] if new else None})
     for t, r in adds:
-        moves.append({"date": t.added_on.isoformat(), "dateLabel": _short(t.added_on), "out": None, "outPts": None,
+        moves.append({"date": t.added_on.isoformat(), "dateLabel": _short(t.added_on), "out": None, "outPts": None, "outAfter": None,
                       "in": r["player"], "inPts": r["pts"]})
     moves.sort(key=lambda m: m["date"], reverse=True)
     return team, former, moves
@@ -337,6 +347,21 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
         chatter.append({"tag": "Dans le rétroviseur", "good": True, "name": c["name"], "color": c["color"], "text": f"{c['name']} n’est qu’à {c['gap']} {_plural(c['gap'], 'point', 'points')} du sommet. Rien n’est joué."})
     if top_mover and top_mover["move"] >= 2:
         chatter.append({"tag": "Remontée", "good": True, "name": top_mover["name"], "color": top_mover["color"], "text": f"{top_mover['name']} gagne {top_mover['move']} rangs en une soirée."})
+    # every completed move (one out, one in), judged by what each player did afterwards
+    trades = []
+    for p in poolers:
+        for m in p["moves"]:
+            if m["out"] and m["in"]:
+                diff = m["inPts"] - m["outAfter"]
+                trades.append({"id": p["id"], "name": p["name"], "color": p["color"], "dateLabel": m["dateLabel"],
+                               "out": m["out"], "outAfter": m["outAfter"], "in": m["in"], "inPts": m["inPts"], "diff": diff,
+                               "tag": "Bon coup" if diff > 0 else "Regret" if diff < 0 else "Égalité"})
+    trades.sort(key=lambda t: (-t["diff"], t["name"], t["in"]))
+    worst = trades[-1] if trades else None
+    if worst and worst["diff"] <= -3:
+        out_last = worst["out"].split(" ")[-1]
+        chatter.insert(min(2, len(chatter)), {"tag": "Regret", "good": False, "name": worst["name"], "color": worst["color"],
+                        "text": f"{worst['name']} a laissé partir {out_last} : {worst['outAfter']} pts depuis, contre {worst['inPts']} pour {worst['in'].split(' ')[-1]}."})
     chatter = chatter[:4]
 
     since = (today - timedelta(days=7)).isoformat()
@@ -362,5 +387,5 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
             "unresolved": [u.split("'")[1] for u in unresolved if "'" in u],
         },
         "headline": headline, "tiles": tiles, "poolers": poolers, "deals": deals, "cold": cold,
-        "awards": awards, "chatter": chatter, "recentMoves": recent_moves, "trendDays": [_short(d) for d in trend_days], "summary":"\n".join(summary), "warnings": sorted(set(warnings)),
+        "awards": awards, "chatter": chatter, "recentMoves": recent_moves, "trades": trades, "trendDays": [_short(d) for d in trend_days], "summary":"\n".join(summary), "warnings": sorted(set(warnings)),
     }

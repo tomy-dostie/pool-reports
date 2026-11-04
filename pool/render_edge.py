@@ -76,6 +76,19 @@ h2{margin:6px 0 0;font:700 13px 'Barlow Condensed',sans-serif;letter-spacing:.18
 .duel .num{font-size:26px}.duel .win{color:var(--accent)}
 .mvr{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;padding:10px 12px;align-items:baseline}.mvr b{font:700 14px 'Barlow Condensed',sans-serif;text-transform:uppercase;color:var(--muted)}
 .award{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px}.award .w{font:800 22px/1 'Barlow Condensed',sans-serif;text-transform:uppercase}.award .d{font-weight:600;color:var(--accent);text-align:right}
+.since{padding:14px 16px;display:flex;flex-direction:column;gap:10px;border-color:var(--accent);background:linear-gradient(160deg,rgba(43,227,166,.12),var(--panel) 60%)}
+.since .row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.since .big{font-size:52px;line-height:.85}.since .rk{font-size:30px;line-height:1;text-align:right}
+.since ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:15px;line-height:1.35}
+.since li{display:flex;gap:8px}.since li i{font-style:normal;width:16px;flex:none;text-align:center}
+.who{padding:14px 16px;display:flex;flex-direction:column;gap:10px}.who .t{font:800 26px/1 'Barlow Condensed',sans-serif;text-transform:uppercase}
+.me-line{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:var(--muted)}.me-line b{color:var(--text)}
+.tag{display:inline-block;padding:2px 7px;border-radius:6px;font:700 11px 'Barlow Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase;background:var(--panel2);color:var(--muted)}
+.tag.good{background:rgba(43,227,166,.16);color:var(--accent)}.tag.bad{background:rgba(255,122,89,.16);color:var(--warm)}
+.trade{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 12px}
+.trade .num{font-size:26px;text-align:right}.trade>.small{grid-column:1/-1}
+.pop{display:inline-block;animation:pop .6s ease-out .5s both}@keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.25)}100%{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}}
 .nav{display:grid;grid-template-columns:1fr 2fr;gap:8px}
 .nav button{height:48px;border-radius:12px;text-align:center;font:700 16px 'Barlow Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase}
 #prev{background:var(--panel);border:1px solid var(--line)}#prev:disabled{color:#46536A}#next{background:var(--accent);color:var(--ink);font-weight:800}
@@ -95,7 +108,7 @@ window.DATA = __DATA__;
   var D = window.DATA, M = D.meta, P = D.poolers;
   var KICK = ['Aperçu', 'Ma soirée', 'Classement', 'Agents libres', 'Les prix'];
   var KPI = [['total', 'Total'], ['yday', 'Hier'], ['last7', '7 jours'], ['proj', 'Projection']];
-  var idx = 0, me = null, detail = null, rival = null, picking = false, raceKey = 'total', sortKey = 'pts';
+  var idx = 0, me = null, known = false, asking = false, detail = null, rival = null, picking = false, raceKey = 'total', sortKey = 'pts';
 
   function el(t, c, x) { var n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; }
   function add(p) { for (var i = 1; i < arguments.length; i++) if (arguments[i]) p.appendChild(arguments[i]); return p; }
@@ -104,6 +117,77 @@ window.DATA = __DATA__;
   function byId(id) { return P.filter(function (p) { return p.id === id; })[0]; }
   function maxOf(k) { return Math.max.apply(null, P.map(function (p) { return p.kpi[k].v; }).concat([1])); }
   function tier(p) { return p >= 90 ? 'var(--accent)' : p >= 75 ? 'var(--accent2)' : p >= 50 ? 'var(--mid)' : 'var(--warm)'; }
+  function verdict(x) {                                 // a move judged by what each player did afterwards
+    if (!x.out || !x.in || x.outAfter == null) return null;
+    var d = x.inPts - x.outAfter;
+    return el('span', 'tag ' + (d > 0 ? 'good' : d < 0 ? 'bad' : ''), d > 0 ? 'Bon coup +' + d : d < 0 ? 'Regret ' + d : 'Égal');
+  }
+  function last(name) { return String(name).split(' ').slice(-1)[0]; }
+  function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  var still = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  // ---- "since your last visit": the browser keeps a small snapshot of the standings (nothing leaves the phone) ----
+  // base = what you saw before the latest results; it stays the same all day so the panel does not vanish on reload.
+  function snapshot() {
+    var s = { day: M.lastDay, label: M.lastDayLabel, t: {}, r: {}, pl: {} };
+    P.forEach(function (p) { s.t[p.id] = p.total; s.r[p.id] = p.rank; s.pl[p.id] = {}; p.team.concat(p.former).forEach(function (x) { s.pl[p.id][x.player] = (s.pl[p.id][x.player] || 0) + x.pts; }); });
+    return s;
+  }
+  var base = null, animate = false, mem = M.demo ? null : (load('pool.seen') || {});
+  if (mem && !(mem.cur && mem.cur.day > M.lastDay)) {               // (an older cached page never overwrites newer memory)
+    if (!mem.cur || mem.cur.day !== M.lastDay) mem = { base: mem.cur || null, cur: snapshot(), shown: null };
+    base = mem.base;
+    animate = !!base && mem.shown !== M.lastDay && !still;           // the count-up plays once per new day, not on every visit
+    mem.shown = M.lastDay; save('pool.seen', mem);
+  }
+
+  function countUp(node, to, prefix) {
+    if (!animate || !to) { node.textContent = prefix + to; return; }
+    var t0 = null;
+    node.textContent = prefix + 0;
+    function step(t) { if (t0 == null) t0 = t; var k = Math.min(1, (t - t0) / 1100); node.textContent = prefix + Math.round(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); }
+    setTimeout(function () { requestAnimationFrame(step); }, 250);
+  }
+  function sincePanel(p) {
+    if (!base || base.t[p.id] == null) return null;
+    var was = base.t[p.id], wasRk = base.r[p.id], gained = p.total - was, dRk = wasRk - p.rank;
+    var box = el('div', 'panel since'), head = el('div', 'row');
+    var big = el('div', 'big num'), rk = el('div', 'rk num');
+    countUp(big, gained, '+');
+    rk.textContent = ord(p.rank);
+    if (dRk) { var arrow = el('span', (dRk > 0 ? 'mv-up' : 'mv-down') + (animate ? ' pop' : ''), dRk > 0 ? ' ▲' + dRk : ' ▼' + (-dRk)); rk.appendChild(arrow); }
+    add(head, add(el('div'), el('div', 'kick', 'Depuis ta dernière visite'), big, el('div', 'small', plural(gained, 'point', 'points') + ' · total ' + p.total)), add(el('div'), rk, el('div', 'small', dRk ? 'était ' + ord(wasRk) : 'même rang')));
+    add(box, head);
+    var ul = el('ul');
+    function li(icon, text, cls) { var x = add(el('li', cls || null), el('i', null, icon), el('span', null, text)); ul.appendChild(x); }
+    var passed = [], passedBy = [];
+    P.forEach(function (q) {
+      if (q.id === p.id || base.t[q.id] == null) return;
+      if (was < base.t[q.id] && p.total > q.total) passed.push(q.name);
+      if (was > base.t[q.id] && p.total < q.total) passedBy.push(q.name);
+    });
+    if (p.rank === 1 && wasRk > 1) li('👑', 'Tu prends le 1er rang.', 'mv-up');
+    if (passed.length) li('▲', 'Tu as dépassé ' + passed.join(', ') + '.', 'mv-up');
+    if (passedBy.length) li('▼', passedBy.join(', ') + ' ' + (passedBy.length > 1 ? 't’ont' : 't’a') + ' dépassé.', 'mv-down');
+    var leaderWas = Math.max.apply(null, P.map(function (q) { return base.t[q.id] || 0; })), gapWas = leaderWas - was;
+    if (p.rank > 1 && gapWas !== p.gap) li('↔', 'Écart avec le 1er : ' + gapWas + ' → ' + p.gap + (p.gap < gapWas ? '. Ça se rapproche.' : '.'));
+    var mine = base.pl[p.id] || {}, deltas = [];
+    p.team.concat(p.former).forEach(function (x) { var d = x.pts - (mine[x.player] || 0); if (d > 0) deltas.push([d, x.player]); });
+    deltas.sort(function (a, b) { return b[0] - a[0]; });
+    if (deltas.length) li('★', deltas.slice(0, 3).map(function (d) { return last(d[1]) + ' +' + d[0]; }).join(' · '));
+    else if (gained === 0) li('·', 'Aucun point depuis. On se reprend ce soir.');
+    if (ul.childNodes.length) add(box, ul);
+    add(box, el('div', 'small', 'Résultats du ' + base.label + ' au ' + M.lastDayLabel + '.'));
+    animate = false;                                                  // coming back to this card later: no replay
+    return box;
+  }
+  function setMe(id) { me = id; asking = false; known = true; try { localStorage.setItem('pool.me', id); } catch (e) {} }
+  function whoPanel() {
+    return add(el('div', 'panel who'), el('div', 't', 'T’es qui ?'),
+      el('p', 'sub', 'Choisis ton nom une fois : la page s’ouvrira sur ton équipe et te dira ce qui a changé depuis ta dernière visite. Rien n’est envoyé, c’est gardé sur ton téléphone.'),
+      chips(asking && known ? me : null, setMe));
+  }
 
   function track(frac, color, tickFrac) {
     var t = el('div', 'track'), f = el('div', 'fill');
@@ -164,6 +248,13 @@ window.DATA = __DATA__;
   function cover() {
     var s = el('div', 'stack');
     add(s, add(el('div', 'date'), el('div', 'd num', String(M.dayNumber)), add(el('div'), el('div', 'm', M.month), el('div', 'small', M.weekday + ' · résultats du ' + M.lastDayLabel))));
+    if (asking) add(s, whoPanel());
+    else {
+      var p = byId(me), ch = el('button', 'link', 'Changer');
+      ch.onclick = function () { asking = true; show(true); };
+      add(s, add(el('div', 'me-line'), add(el('span'), document.createTextNode('Toi : '), el('b', null, p.name + ' · ' + ord(p.rank)), document.createTextNode(p.rank === 1 ? ' · au sommet' : ' · à ' + p.gap + ' du 1er')), ch));
+      add(s, sincePanel(p));
+    }
     add(s, add(el('div', 'panel lead'), el('div', 't', D.headline.title), el('p', null, D.headline.text)));
     var t = el('div', 'tiles three');
     D.tiles.forEach(function (x) { add(t, add(el('div', 'panel tile'), el('div', 'l', x.label), el('div', 'v num', x.value))); });
@@ -180,7 +271,7 @@ window.DATA = __DATA__;
   }
   function mine() {
     var s = el('div', 'stack'), p = byId(me);
-    add(s, el('h1', null, 'Ma soirée'), chips(me, function (id) { me = id; try { localStorage.setItem('pool.me', id); } catch (e) {} }));
+    add(s, el('h1', null, 'Ma soirée'), chips(me, setMe));
     var t = el('div', 'tiles'); KPI.forEach(function (k) { t.appendChild(tile(k[1], k[0], p)); }); add(s, t);
     add(s, el('h2', null, 'Hier soir · +' + p.yday));
     var l = el('div', 'panel rows');
@@ -231,14 +322,19 @@ window.DATA = __DATA__;
     add(s, l, el('p', 'small', 'Barre : rang LNH en points par match cette saison, parmi les joueurs à la même position (100 = le meilleur). Points du pool : seulement pendant qu’il appartient à ' + p.name + '.'));
     if (p.former.length) {
       var f = el('div', 'panel rows');
-      p.former.forEach(function (r) { add(f, add(el('div', 'pl'), el('div', 'nm', r.player), add(el('span', 'pp'), el('span', 'num', String(r.pts)), el('span', 'small', plural(r.pts, 'gardé', 'gardés'))), el('div', 'small', r.team + ' · ' + r.gp + ' PJ · jusqu’au ' + r.until))); });
+      p.former.forEach(function (r) {
+        var after = r.after ? el('div', 'small mv-down', '+' + r.after + ' ' + plural(r.after, 'pt', 'pts') + ' depuis son départ' + (r.after >= 3 ? ' 😬' : '')) : null;
+        add(f, add(el('div', 'pl'), el('div', 'nm', r.player), add(el('span', 'pp'), el('span', 'num', String(r.pts)), el('span', 'small', plural(r.pts, 'gardé', 'gardés'))), el('div', 'small', r.team + ' · ' + r.gp + ' PJ · jusqu’au ' + r.until), after));
+      });
       add(s, el('h2', null, 'Partis'), f);
     }
     var m = el('div', 'panel rows');
     if (p.moves.length) p.moves.forEach(function (x) {
       var what = x.out && x.in ? x.out + ' ➜ ' + x.in : (x.out ? x.out + ' retiré' : x.in + ' ajouté'), det = [];
-      if (x.out) det.push(x.outPts + ' ' + plural(x.outPts, 'pt gardé', 'pts gardés')); if (x.in) det.push(x.inPts + ' ' + plural(x.inPts, 'pt', 'pts') + ' depuis');
-      add(m, add(el('div', 'mvr'), el('b', null, x.dateLabel), add(el('span'), el('div', 'nm', what), el('div', 'small', det.join(' · ')))));
+      if (x.in) det.push(last(x.in) + ' ' + x.inPts + ' ' + plural(x.inPts, 'pt', 'pts') + ' ici');
+      if (x.out && x.outAfter != null) det.push(last(x.out) + ' ' + x.outAfter + ' ailleurs');
+      if (x.out) det.push(x.outPts + ' ' + plural(x.outPts, 'pt gardé', 'pts gardés'));
+      add(m, add(el('div', 'mvr'), el('b', null, x.dateLabel), add(el('span'), add(el('div', 'nm'), document.createTextNode(what + ' '), verdict(x)), el('div', 'small', det.join(' · ')))));
     });
     else add(m, add(el('div', 'mvr'), el('b', null, '–'), el('span', 'small', 'Aucun mouvement cette saison.')));
     add(s, el('h2', null, 'Mouvements'), m);
@@ -284,6 +380,23 @@ window.DATA = __DATA__;
     add(s, el('h1', null, 'Les prix du jour'));
     if (D.awards.length) { var l = el('div', 'panel rows'); D.awards.forEach(function (a) { add(l, add(el('div', 'award'), add(el('span'), el('div', 'small', a.label), el('div', 'w', a.winner)), el('span', 'd', a.detail))); }); add(s, l); }
     if (D.chatter.length) { var c = el('div', 'panel rows'); D.chatter.forEach(function (x) { add(c, add(el('div', 'pl'), add(el('div'), el('div', 'small ' + (x.good ? 'mv-up' : 'mv-down'), x.tag), el('div', null, x.text)))); }); add(s, el('h2', null, 'La jasette'), c); }
+    var T = D.trades || [];
+    if (T.length) {
+      // best moves first, then the worst regrets (each move shown once)
+      var good = T.filter(function (t) { return t.diff > 0; }).slice(0, 2), bad = T.filter(function (t) { return t.diff < 0; }).slice(-2).reverse();
+      var list = good.concat(bad);
+      if (!list.length) list = T.slice(0, 2);
+      var tl = el('div', 'panel rows');
+      list.forEach(function (t) {
+        var r = el('button', 'trade'), n = el('span', 'num ' + (t.diff > 0 ? 'mv-up' : t.diff < 0 ? 'mv-down' : ''), (t.diff > 0 ? '+' : '') + t.diff);
+        var tag = el('span', 'tag ' + (t.diff > 0 ? 'good' : t.diff < 0 ? 'bad' : ''), t.tag);
+        var who = add(el('div'), add(el('div', 'small'), tag, document.createTextNode(' ' + t.name + ' · ' + t.dateLabel)), el('div', 'nm', last(t.out) + ' ➜ ' + last(t.in)));
+        add(r, who, n, el('div', 'small', last(t.in) + ' ' + t.inPts + ' ' + plural(t.inPts, 'pt', 'pts') + ' depuis · ' + last(t.out) + ' ' + t.outAfter + ' ailleurs'));
+        r.onclick = function () { open(t.id); };
+        tl.appendChild(r);
+      });
+      add(s, el('h2', null, 'Bons coups et regrets'), tl);
+    }
     var b = el('button', 'btn', 'Copier le résumé');
     b.onclick = function () {
       function done(ok) { b.textContent = ok ? 'Copié' : 'Copie impossible'; }
@@ -311,7 +424,9 @@ window.DATA = __DATA__;
   var ids = P.map(function (p) { return p.id; }), want = null;
   try { want = new URLSearchParams(location.search).get('p'); } catch (e) {}
   if (ids.indexOf(want) < 0) { try { want = localStorage.getItem('pool.me'); } catch (e) { want = null; } }
-  me = ids.indexOf(want) >= 0 ? want : ids[0];
+  known = ids.indexOf(want) >= 0;
+  me = known ? want : ids[0];
+  asking = !known;                                     // first visit: ask "T'es qui ?" on the first card (no login)
   if (location.hash === '#equipe') { idx = RACE; detail = me; }
   document.getElementById('demo').hidden = !M.demo;
   document.getElementById('prev').onclick = function () { go(-1); };

@@ -114,8 +114,23 @@ def test_drop_day_points_go_to_nobody_on_the_team_sheet():
     lines = {d1: [Line(d1, 1, "O. Guy", "TOR", 1, 0)], d2: [Line(d2, 1, "O. Guy", "TOR", 2, 0), Line(d2, 2, "N. Guy", "MTL", 0, 1)]}
     team, former, moves = team_sheet(roster.poolers[0], roster, lines, [d1, d2], d2, {}, date(2026, 10, 3))
     assert [(r["player"], r["pts"]) for r in team] == [("New Guy", 1)]
-    assert [(r["player"], r["pts"], r["until"]) for r in former] == [("Old Guy", 1, "1 oct.")]
-    assert moves == [{"date": "2026-10-02", "dateLabel": "2 oct.", "out": "Old Guy", "outPts": 1, "in": "New Guy", "inPts": 1}]
+    assert [(r["player"], r["pts"], r["until"], r["after"]) for r in former] == [("Old Guy", 1, "1 oct.", 2)]
+    assert moves == [{"date": "2026-10-02", "dateLabel": "2 oct.", "out": "Old Guy", "outPts": 1, "outAfter": 2, "in": "New Guy", "inPts": 1}]
+
+
+def test_trades_judge_each_move_by_what_came_after(built):
+    _, _, data = built
+    by_id = {p["id"]: p for p in data["poolers"]}
+    assert data["trades"]
+    for t in data["trades"]:
+        m = next(m for m in by_id[t["id"]]["moves"] if m["out"] == t["out"] and m["in"] == t["in"])
+        assert t["diff"] == m["inPts"] - m["outAfter"] and m["outAfter"] >= 0
+        assert t["tag"] == ("Bon coup" if t["diff"] > 0 else "Regret" if t["diff"] < 0 else "Égalité")
+    diffs = [t["diff"] for t in data["trades"]]
+    assert diffs == sorted(diffs, reverse=True)
+    for p in data["poolers"]:
+        assert all(r["after"] is not None and r["after"] >= 0 for r in p["former"])
+        assert all("after" not in r for r in p["team"])
 
 
 def test_page_has_the_team_card(built):
@@ -161,6 +176,8 @@ def test_tiles_trend_and_preview_page(built):
     assert any(r["pct"] is not None for p in data["poolers"] for r in p["team"])
     page = render_edge(data)
     assert page.count("</script>") == 1 and "url(fonts/barlow-400.woff2)" in page and "googleapis" not in page
+    assert "T’es qui ?" in page and "Depuis ta dernière visite" in page and "Bons coups et regrets" in page
+    assert ".innerHTML" not in page
 
 
 def test_build_writes_new_main_page_classic_fallback_and_redirect(tmp_path):
