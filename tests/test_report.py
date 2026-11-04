@@ -186,6 +186,21 @@ def test_tonight_clash_is_the_busiest_game(built):
     assert c["players"] == len(per_game[home]) == sum(x["n"] for x in c["poolers"])
 
 
+def test_pace_catch_threat_and_no_far_dates():
+    from pool.report import pace
+    days = [date(2026, 10, 20) + __import__("datetime").timedelta(days=k) for k in range(14)]
+    nightly_pts = {"a": 2, "b": 3, "c": 0}                   # per day over the last 14 days
+    results = {d: {i: (v, []) for i, v in nightly_pts.items()} for d in days}
+    poolers = [{"id": "a", "name": "A", "total": 100}, {"id": "b", "name": "B", "total": 90}, {"id": "c", "name": "C", "total": 10}]
+    out = pace(poolers, results, days, days[-1], date(2026, 9, 29))
+    # b gains 1 pt/day on a, 10 behind -> passes a in 11 days (needs to be strictly ahead)
+    assert out["b"]["chase"] == {"kind": "catch", "id": "a", "name": "A", "gain": 1.0, "date": "13 nov."}
+    assert out["a"]["chase"]["kind"] == "threat" and out["a"]["chase"]["id"] == "b"
+    assert out["c"]["chase"] is None                         # slower than b: never catches up
+    assert out["a"]["milestone"]["value"] == 150
+    assert out["c"]["milestone"] is None or out["c"]["milestone"]["value"] == 50
+
+
 def test_page_has_the_team_card(built):
     _, _, data = built
     page = render(data)

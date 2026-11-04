@@ -1,4 +1,5 @@
 """Builds the report data (all the numbers and the French text) for one morning."""
+import math
 import statistics
 from bisect import bisect_left, bisect_right
 from collections import defaultdict
@@ -227,6 +228,53 @@ def season_records(roster, results, game_days, lines_by_day, names, upto=None):
     return out
 
 
+PACE_DAYS = 14          # "à ce rythme" uses the last 14 calendar days
+PACE_HORIZON = 60       # never announce a catch-up or milestone more than 60 days away (too speculative)
+
+
+def pace(poolers, results, trend_days, last_day, start_date):
+    """{id: {"rate", "chase", "milestone"}} from recent form, with no silly far-away dates.
+
+    chase: for the 1st place, the pooler closing in fastest ("threat"); for others, when they would pass the
+    pooler just above them. milestone: next multiple of 50 points at the season rate."""
+    if not trend_days:
+        return {}
+    since = last_day - timedelta(days=PACE_DAYS - 1)
+    rate = {p["id"]: sum(results[d][p["id"]][0] for d in trend_days if d >= since) / PACE_DAYS for p in poolers}
+    season_days = max(1, (last_day - start_date).days + 1)
+    out = {}
+    for p in poolers:
+        me = p["id"]
+        chase = None
+        above = [q for q in poolers if q["total"] > p["total"]]
+        if above:
+            q = min(above, key=lambda q: (q["total"], q["name"]))
+            gain = rate[me] - rate[q["id"]]
+            if gain > 0:
+                days = math.ceil((q["total"] - p["total"] + 0.5) / gain)
+                if days <= PACE_HORIZON:
+                    chase = {"kind": "catch", "id": q["id"], "name": q["name"], "gain": round(gain, 1), "date": _short(last_day + timedelta(days=days))}
+        else:
+            below = [q for q in poolers if q["total"] < p["total"] and rate[q["id"]] > rate[me]]
+            best = None
+            for q in below:
+                gain = rate[q["id"]] - rate[me]
+                days = math.ceil((p["total"] - q["total"] + 0.5) / gain)
+                if days <= PACE_HORIZON and (best is None or days < best[0]):
+                    best = (days, q, gain)
+            if best:
+                chase = {"kind": "threat", "id": best[1]["id"], "name": best[1]["name"], "gain": round(best[2], 1), "date": _short(last_day + timedelta(days=best[0]))}
+        milestone = None
+        season_rate = p["total"] / season_days
+        if season_rate > 0:
+            target = (p["total"] // 50 + 1) * 50
+            days = math.ceil((target - p["total"]) / season_rate)
+            if days <= PACE_HORIZON:
+                milestone = {"value": target, "date": _short(last_day + timedelta(days=days))}
+        out[me] = {"rate": round(rate[me], 1), "chase": chase, "milestone": milestone}
+    return out
+
+
 MIN_GAMES_FOR_RANK = 5
 
 
@@ -365,6 +413,9 @@ def build_report(roster, client, today, game_types=(2,), demo=False, url=""):
     ranks, h2h, h2h_streak = nightly(roster, results, trend_days, lines_by_day)
     for p in poolers:
         p["ranks"], p["h2h"], p["h2hStreak"] = ranks[p["id"]], h2h[p["id"]], h2h_streak[p["id"]]
+    paces = pace(poolers, results, trend_days, last_day, roster.start_date)
+    for p in poolers:
+        p["pace"] = paces.get(p["id"])
     names = {p["id"]: p["name"] for p in poolers}
     records = season_records(roster, results, trend_days, lines_by_day, names)
     before = {r["key"]: r["value"] for r in season_records(roster, results, trend_days, lines_by_day, names, upto=-1)} if len(trend_days) > 1 else None

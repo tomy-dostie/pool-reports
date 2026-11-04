@@ -283,6 +283,20 @@ window.DATA = __DATA__;
     return box;
   }
 
+  function dec(x) { return String(x).replace('.', ','); }
+  // "À ce rythme": recent form projected forward (the report never gives a date more than 60 days away)
+  function pacePanel(p, mine) {
+    var x = p.pace; if (!x) return null;
+    var ul = el('ul'); ul.style.cssText = 'margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:15px;line-height:1.35';
+    function li(text, cls) { ul.appendChild(el('li', cls || null, text)); }
+    var c = x.chase;
+    if (c && c.kind === 'catch') li((mine ? 'Tu passes ' : p.name + ' passe ') + c.name + ' vers le ' + c.date + ' (+' + dec(c.gain) + ' pt par jour sur ' + c.name + ').', 'mv-up');
+    if (c && c.kind === 'threat') li(c.name + (mine ? ' te rattrape' : ' rattrape ' + p.name) + ' vers le ' + c.date + ' s’il garde ce rythme (+' + dec(c.gain) + ' pt par jour).', 'mv-down');
+    if (!c && p.rank > 1) li((mine ? 'Tu ne rattrapes' : p.name + ' ne rattrape') + ' personne à ce rythme. Il faut accélérer.');
+    if (!c && p.rank === 1) li(mine ? 'Personne ne te rattrape à ce rythme.' : 'Personne ne rattrape ' + p.name + ' à ce rythme.', 'mv-up');
+    if (x.milestone) li('Cap des ' + x.milestone.value + ' pts vers le ' + x.milestone.date + (/\.$/.test(x.milestone.date) ? '' : '.'));
+    return add(el('div', 'panel lead'), el('div', 'kick', 'À ce rythme · ' + dec(x.rate) + ' pts par jour (14 j)'), ul);
+  }
   // "Qui porte l'équipe": each player's share of the pooler's points (players gone included)
   function shares(p) {
     var m = {}; p.team.concat(p.former).forEach(function (r) { m[r.player] = (m[r.player] || 0) + r.pts; });
@@ -348,7 +362,7 @@ window.DATA = __DATA__;
   function mine() {
     var s = el('div', 'stack'), p = byId(me);
     add(s, el('h1', null, 'Ma soirée'), chips(me, setMe));
-    var t = el('div', 'tiles'); KPI.forEach(function (k) { t.appendChild(tile(k[1], k[0], p)); }); add(s, t);
+    var t = el('div', 'tiles'); KPI.forEach(function (k) { t.appendChild(tile(k[1], k[0], p)); }); add(s, t, pacePanel(p, true));
     add(s, el('h2', null, 'Hier soir · +' + p.yday));
     var l = el('div', 'panel rows');
     if (p.scorers.length) p.scorers.forEach(function (x) { add(l, add(el('div', 'pl'), add(el('span'), el('div', 'nm', x.player), el('div', 'small', x.line)), add(el('span', 'pp'), el('span', 'num', String(x.pts))))); });
@@ -390,7 +404,7 @@ window.DATA = __DATA__;
     var back = el('button', 'link', '‹ Classement'); back.onclick = function () { detail = null; picking = false; show(); };
     var ini = el('div', 'ini', p.initials); ini.style.background = p.color;
     add(s, back, add(el('div', 'panel hero'), ini, add(el('div'), el('div', 'nm', p.name), el('div', 'small', ord(p.rank) + ' sur ' + P.length + (p.rank === 1 ? ' · au sommet' : ' · à ' + p.gap + ' du 1er'))), el('div', 'tot num', String(p.total))));
-    var t = el('div', 'tiles'); KPI.forEach(function (k) { t.appendChild(tile(k[1], k[0], p)); }); add(s, t);
+    var t = el('div', 'tiles'); KPI.forEach(function (k) { t.appendChild(tile(k[1], k[0], p)); }); add(s, t, pacePanel(p, p.id === me && known));
     add(s, el('h2', null, 'Progression de la saison'), chartToggle(), chart([p.id]));
     add(s, nights(p), carry(p));
     var duelBtn = el('button', 'btn', picking ? 'Choisis un adversaire' : 'Duel contre un pooler'); duelBtn.onclick = function () { picking = !picking; show(true); };
