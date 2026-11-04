@@ -811,12 +811,18 @@ window.DATA = __DATA__;
     if (route.screen === 'direct' && liveOn()) return liveView();
     return { accueil: home, moi: mine, classement: race, marche: market, prix: prizes }[route.tab || 'accueil']();
   }
+  // The tab bar and the top bar are drawn first and a failing section is caught: navigation can never disappear.
   function render(keep) {
-    var c = card(), sc = keep ? c.scrollTop : (route.scroll || 0);
-    c.className = 'card' + (keep ? '' : ' in'); c.textContent = ''; c.appendChild(view());
+    var c = card(), sc = keep ? c.scrollTop : (route.scroll || 0), content;
+    try { drawTabs(); } catch (e) {}
+    try { drawTop(); } catch (e) {}
+    try { content = view(); } catch (e) {
+      content = add(el('div', 'stack'), el('h1', null, 'Oups'), el('p', 'sub', 'Cette section n’a pas pu s’afficher. Les autres onglets fonctionnent.'), el('p', 'small', String(e && e.message || e)));
+      var home_ = el('button', 'btn main', 'Retour à l’accueil'); home_.onclick = function () { openTab('accueil'); }; content.appendChild(home_);
+    }
+    c.className = 'card' + (keep ? '' : ' in'); c.textContent = ''; c.appendChild(content);
     c.scrollTop = sc; route.scroll = 0;
-    drawTop(); drawTabs();
-    document.title = 'Pool LNH : ' + (route.screen === 'pooler' ? byId(route.a).name : TABS.filter(function (t) { return t[0] === route.tab; })[0][1].toLowerCase());
+    try { document.title = 'Pool LNH : ' + (route.screen === 'pooler' ? byId(route.a).name : TABS.filter(function (t) { return t[0] === route.tab; })[0][1].toLowerCase()); } catch (e) {}
   }
 
   // ---------------------------------------------------------------- start

@@ -68,7 +68,9 @@ jobs:
       - name: Build the page
         env:
           REPORT_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
-        run: python -m pool build --out site --classic site/classique
+        # The morning run builds the official report. Any other run (push, manual) also adds tonight's live part,
+        # otherwise a push during a game night would wipe the "En direct" panel until the next live run.
+        run: python -m pool build --out site --classic site/classique ${{ github.event_name != 'schedule' && '--live' || '' }}
 
       - name: Keep downloaded games for next time
         if: always()
