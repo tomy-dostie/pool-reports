@@ -15,7 +15,7 @@ TEMPLATE = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'__CONNECT__; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0A0D12">
 <link rel="manifest" href="manifest.webmanifest">
@@ -45,6 +45,11 @@ html,body{height:100%;overflow:hidden}
 .back:active{background:var(--line)}
 .top .ttl{font:800 22px/1 'Barlow Condensed',sans-serif;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top .val{font-size:30px;line-height:1}
+.stale{border:1.5px solid var(--warm);color:var(--warm);font-size:14px;font-weight:600;text-align:center;border-radius:10px;padding:8px 10px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;min-height:48px;padding:8px 0;width:100%}
+.opt .box{flex:none;width:26px;height:26px;border-radius:7px;border:2px solid var(--line);display:grid;place-items:center;font-weight:800;color:var(--ink)}
+.opt[aria-pressed="true"] .box{background:var(--accent);border-color:var(--accent)}
+.opt .small{display:block}
 .demo{background:var(--warm);color:var(--ink);font:700 13px 'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase;text-align:center;border-radius:8px;padding:5px 8px}
 .card{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .card.in{animation:in .18s ease-out}@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -152,6 +157,7 @@ h2{margin:8px 0 0;font:700 15px 'Barlow Condensed',sans-serif;letter-spacing:.1e
 <div class="app">
   <header class="top" id="top"><span class="brand">Pool <b>LNH</b> · Analyse</span></header>
   <div class="demo" id="demo" hidden>Aperçu : chiffres inventés</div>
+  <div class="stale" id="stale" hidden>Pas encore à jour : les stats d’hier soir s’en viennent.</div>
   <main class="card" id="card" tabindex="-1"></main>
   <nav class="tabs" id="tabs" aria-label="Sections"></nav>
 </div>
@@ -389,6 +395,109 @@ window.DATA = __DATA__;
     }, function () {});
   }
 
+  // ---------------------------------------------------------------- push notifications (Cloudflare Worker)
+  // Hidden until the repo variables PUSH_URL / VAPID_PUBLIC_KEY are set (meta.push). The service worker only shows
+  // notifications: it has no fetch handler and caches nothing. pool.push = {types, id} once this phone is subscribed.
+  var PUSH = M.push, swReg = null, pushBusy = false, pushDraft = null;
+  var NOTIFS = [['matin', 'Résumé du matin', 'Vers 7 h : ton rang pis tes points d’hier.'],
+                ['depasse', 'Dépassé / t’as dépassé', 'Quand quelqu’un te passe au classement, ou que tu passes quelqu’un.']];
+  function pushOk() { return !!(PUSH && PUSH.url && PUSH.key && navigator.serviceWorker && window.PushManager && window.Notification); }
+  function b64u(str) {
+    var b = atob(str.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((str.length + 3) % 4)), a = new Uint8Array(b.length);
+    for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i);
+    return a;
+  }
+  function pushCall(path, body) {
+    return fetch(PUSH.url + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { if (!r.ok) throw new Error('push ' + r.status); });
+  }
+  function pushSync(types) {                        // (re)send this phone's subscription with the current pooler and types
+    return swReg.pushManager.getSubscription().then(function (sub) {
+      if (!sub) throw new Error('no subscription');
+      return pushCall('/abonner', { sub: sub.toJSON(), pooler: me, types: types }).then(function () { save('pool.push', { types: types, id: me }); });
+    });
+  }
+  function pushDone(msg) { pushBusy = false; if (msg) toast(msg); if (route.tab === 'moi' && !route.screen) render(true); }
+  function pushOn(types) {
+    if (!swReg || pushBusy) return;
+    pushBusy = true;
+    // subscribe() is called right inside the tap: iPhone only shows the permission prompt during a user gesture
+    swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(PUSH.key) })
+      .then(function () { return pushSync(types); })
+      .then(function () { pushDone('C’est beau ! Une notif de test s’en vient.'); },
+            function () { pushDone(Notification.permission === 'denied' ? 'Notifications refusées.' : 'Oups, ça a pas marché. Réessaie plus tard.'); });
+    render(true);
+  }
+  function pushOff() {
+    if (!swReg || pushBusy) return;
+    pushBusy = true; render(true);
+    swReg.pushManager.getSubscription().then(function (sub) {
+      if (!sub) return;
+      pushCall('/desabonner', { endpoint: sub.endpoint }).catch(function () {});
+      return sub.unsubscribe();
+    }).then(function () { setRaw('pool.push', null); pushDone('Notifications arrêtées.'); }, function () { pushDone('Oups, réessaie.'); });
+  }
+  if (pushOk()) {
+    navigator.serviceWorker.register('sw.js', { scope: './' }).then(function () { return navigator.serviceWorker.ready; }).then(function (reg) {
+      swReg = reg;
+      return reg.pushManager.getSubscription().then(function (sub) {
+        var st = load('pool.push');
+        if (!sub && st) setRaw('pool.push', null);                                    // permission removed in the settings
+        else if (sub && st && known && st.id !== me) pushSync(st.types).catch(function () {});   // name changed: follow it
+        if (route.tab === 'moi' && !route.screen) render(true);
+      });
+    }).catch(function () {});
+  }
+  function notifPanel(p) {
+    if (!PUSH || spectator) return null;
+    var box = add(el('div', 'panel lead'), el('div', 'kick', 'Notifications'));
+    if (!pushOk()) {
+      if (!(ios && !standalone)) return null;
+      return add(box, el('p', 'small', 'Sur iPhone : ajoute le pool à ton écran d’accueil (Partager › Sur l’écran d’accueil), pis ouvre-le de là pour recevoir les notifications.'));
+    }
+    if (Notification.permission === 'denied') return add(box, el('p', 'small', 'Les notifications sont bloquées. Va dans les réglages de ton téléphone pour les permettre.'));
+    var st = load('pool.push'), types = st ? st.types : (pushDraft || ['matin', 'depasse']);
+    NOTIFS.forEach(function (o) {
+      var on = types.indexOf(o[0]) >= 0, b = el('button', 'opt');
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      add(b, el('span', 'box', on ? '✓' : ''), add(el('span'), el('span', 'nm', o[1]), el('span', 'small', o[2])));
+      b.onclick = function () {
+        if (pushBusy) return;
+        var next = on ? types.filter(function (t) { return t !== o[0]; }) : types.concat([o[0]]);
+        if (!st) { pushDraft = next; render(true); return; }
+        if (!next.length) { pushOff(); return; }
+        pushBusy = true; render(true);
+        pushSync(next).then(function () { pushDone(); }, function () { pushDone('Oups, ça a pas marché. Réessaie plus tard.'); });
+      };
+      box.appendChild(b);
+    });
+    if (st) {
+      var off = el('button', 'link', 'Arrêter les notifications ›'); off.onclick = pushOff;
+      add(box, el('p', 'small', pushBusy ? 'Un instant…' : 'Activées sur ce téléphone.'), off);
+    } else {
+      var go = el('button', 'btn main', pushBusy ? 'Un instant…' : !swReg ? 'Préparation…' : 'M’avertir');
+      go.disabled = pushBusy || !swReg || !types.length;
+      go.onclick = function () { pushOn(types); };
+      add(box, go);
+    }
+    return box;
+  }
+
+  // ---------------------------------------------------------------- "Pas encore à jour"
+  // After 7 h (Toronto), a report still dated from an earlier day means last night is missing: say it.
+  function torontoNow() {
+    try {
+      var o = {};
+      new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' })
+        .formatToParts(new Date()).forEach(function (x) { o[x.type] = x.value; });
+      return { day: o.year + '-' + o.month + '-' + o.day, hour: +o.hour };
+    } catch (e) { return null; }
+  }
+  function updateStale() {
+    var t = torontoNow(), b = document.getElementById('stale');
+    if (b) b.hidden = !(t && M.reportDay && !M.demo && t.day > M.reportDay && t.hour >= 7);
+  }
+
   // ---------------------------------------------------------------- "Install as an app"
   var installEvt = null, standalone = !!((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone);
   var ios = /iPhone|iPad|iPod/.test(navigator.userAgent || '');
@@ -577,7 +686,7 @@ window.DATA = __DATA__;
     }
     var p = byId(me), ch = el('button', 'link', 'Pas toi ? Changer ›'); ch.onclick = openWho;
     add(s, add(el('div', 'hero panel'), iniBox(p), add(el('div'), el('div', 'nm', p.name), el('div', 'small', ord(p.rank) + ' sur ' + P.length + ' · ' + gapText(p)))), ch);
-    add(s, tiles(p), pacePanel(p, true));
+    add(s, notifPanel(p), tiles(p), pacePanel(p, true));
     add(s, el('h2', null, 'Hier soir · +' + p.yday));
     var l = el('div', 'panel rows');
     if (p.scorers.length) p.scorers.forEach(function (x) { add(l, add(el('div', 'pl'), add(el('span'), el('div', 'nm', x.player), el('div', 'small', x.line)), add(el('span', 'pp'), el('span', 'num', String(x.pts))))); });
@@ -872,6 +981,7 @@ window.DATA = __DATA__;
   setInterval(function () { checkVersion(false); }, 120000);
   checkVersion(true);
   document.getElementById('demo').hidden = !M.demo;
+  updateStale(); document.addEventListener('visibilitychange', updateStale); setInterval(updateStale, 300000);
   render();
 })();
 </script>
@@ -881,4 +991,6 @@ window.DATA = __DATA__;
 
 
 def render_edge(data):
-    return TEMPLATE.replace("__FONTS__", FONT_CSS).replace("__DATA__", _embed(data))
+    push = (data.get("meta") or {}).get("push")
+    connect = f" {push['url']}" if push else ""        # the Worker origin, validated by __main__.push_config
+    return TEMPLATE.replace("__CONNECT__", connect).replace("__FONTS__", FONT_CSS).replace("__DATA__", _embed(data))

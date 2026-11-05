@@ -4,7 +4,7 @@ Provisional by design: the official numbers are the next morning's report. Uses 
 the standings, so a finished night here gives exactly what the morning report will add.
 """
 import hashlib
-import json
+
 from datetime import datetime, timedelta, timezone
 
 from .engine import norm_team, score_day
@@ -24,9 +24,12 @@ def tonight_games(client, day, game_types=(2,)):
 
 
 def signature(games):
-    """Changes when a game starts, ends, changes period or someone scores (a point always comes with a goal)."""
-    key = [(g.id, g.state, g.away_score, g.home_score, g.period, g.intermission) for g in games if g.started]
-    return hashlib.sha256(json.dumps(sorted(key)).encode()).hexdigest()[:16] if key else None
+    """Changes when a game starts, ends, changes period or someone scores (a point always comes with a goal).
+
+    The Cloudflare Worker (worker/src/index.js, signature()) computes the very same string: keep both in sync."""
+    key = sorted(f"{g.id}:{g.state}:{g.away_score}:{g.home_score}:{g.period}:{int(bool(g.intermission))}"
+                 for g in games if g.started)
+    return hashlib.sha256("|".join(key).encode()).hexdigest()[:16] if key else None
 
 
 def _status(g):

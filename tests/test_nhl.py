@@ -99,3 +99,12 @@ def test_unresolved_player_still_scores_from_abbreviated_box_name():
     r = Roster([Pooler("v", "V", [Stint("Kent Johnson", "CBJ", None, d0, None, "F")])])
     res = score_day(r, D, parse_boxscore(load("boxscore-2026020188.json"), D))
     assert res["v"][0] == 3
+
+
+def test_live_signature_matches_the_cloudflare_worker():
+    # worker/src/index.js signature() gives d8c423471b018b4a for this same scoreboard (checked with Node):
+    # if this fails, the Worker would start a live build every 3 min for nothing. Change both together.
+    from pool.live import signature
+    day = date(2026, 10, 27)
+    games = [g for g in parse_score(load("score-2026-10-27.json")) if g.date == day and g.game_type == 2]
+    assert signature(games) == "d8c423471b018b4a"

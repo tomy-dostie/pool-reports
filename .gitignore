@@ -9,3 +9,8 @@ CLAUDE.md
 workflow-daily.yml
 .env
 *.local.*
+
+# Cloudflare Worker local files
+worker/node_modules/
+worker/.wrangler/
+worker/.dev.vars

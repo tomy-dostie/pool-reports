@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from datetime import date, timedelta
@@ -17,6 +18,17 @@ REDIRECT = ('<!doctype html><meta charset="utf-8"><meta name="referrer" content=
 from .report import build_report, collect, now_toronto
 
 
+def push_config():
+    """Push notifications settings from the repo variables PUSH_URL (the Cloudflare Worker) and VAPID_PUBLIC_KEY.
+
+    Both are public values. Without them the page shows no notifications panel. The URL goes into the page CSP,
+    so only a plain https origin is accepted."""
+    url, key = os.environ.get("PUSH_URL", "").strip().rstrip("/"), os.environ.get("VAPID_PUBLIC_KEY", "").strip()
+    if not re.fullmatch(r"https://[A-Za-z0-9.-]+", url) or not re.fullmatch(r"[A-Za-z0-9_-]{80,100}", key):
+        return None
+    return {"url": url, "key": key}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="pool")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -28,6 +40,7 @@ def main(argv=None):
     b.add_argument("--demo", action="store_true", help="synthetic data, no network")
     b.add_argument("--classic", help="also write the previous page design to this folder (fallback)")
     b.add_argument("--live", action="store_true", help="add tonight's points so far (evening run) and write live.json")
+    b.add_argument("--official", action="store_true", help="morning report (wins over --live): standings through last night")
     lc = sub.add_parser("live-check", help="exit status / GITHUB_OUTPUT changed=true when the live page needs a rebuild")
     lc.add_argument("--roster", default="roster.json")
     lc.add_argument("--cache", default="cache")
@@ -37,6 +50,8 @@ def main(argv=None):
     c.add_argument("--expected", default="expected.json")
     c.add_argument("--cache", default="cache")
     a = ap.parse_args(argv)
+    if a.cmd == "build" and a.official:
+        a.live = False
 
     roster = load_roster(a.roster)
     if a.cmd == "live-check":
@@ -68,7 +83,13 @@ def main(argv=None):
         os.makedirs(a.out, exist_ok=True)
         # build stamp: an open page (or the installed app, which phones keep in memory) reloads when version.json changes
         data["meta"]["build"] = time.strftime("%Y%m%d%H%M%S", time.gmtime())
-        json.dump({"build": data["meta"]["build"]}, open(os.path.join(a.out, "version.json"), "w", encoding="utf-8"))
+        data["meta"]["reportDay"] = today.isoformat()          # the page shows "Pas encore à jour" when this is old
+        push = push_config()
+        if push:
+            data["meta"]["push"] = push
+        # read by the page (reload) and by the Cloudflare Worker (is the morning report out? any game missing?)
+        json.dump({"build": data["meta"]["build"], "day": today.isoformat(), "live": bool(a.live),
+                   "missing": data["meta"].get("missingGames", 0)}, open(os.path.join(a.out, "version.json"), "w", encoding="utf-8"))
         # the morning build leaves a marker so live-check knows that night is official and never rebuilds over it
         live_json = (data["live"] or {"sig": None, "day": today.isoformat()}) if a.live else {"sig": None, "day": None, "morning": today.isoformat()}
         json.dump(live_json, open(os.path.join(a.out, "live.json"), "w", encoding="utf-8"), ensure_ascii=False)

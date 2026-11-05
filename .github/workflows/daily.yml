@@ -5,7 +5,12 @@ name: Rapport quotidien
 on:
   schedule:
     - cron: "0 9 * * *"      # 09:00 UTC = 5 h (summer) / 4 h (winter) in Toronto, after the last games end
-  workflow_dispatch:           # lets you start it by hand from the Actions tab
+  workflow_dispatch:           # lets you start it by hand from the Actions tab (the Cloudflare Worker uses it too)
+    inputs:
+      official:
+        description: "Rapport du matin officiel (sans la partie en direct)"
+        type: boolean
+        default: false
   push:
     branches: [main]
 
@@ -68,9 +73,13 @@ jobs:
       - name: Build the page
         env:
           REPORT_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
-        # The morning run builds the official report. Any other run (push, manual) also adds tonight's live part,
-        # otherwise a push during a game night would wipe the "En direct" panel until the next live run.
-        run: python -m pool build --out site --classic site/classique ${{ github.event_name != 'schedule' && '--live' || '' }}
+          PUSH_URL: ${{ vars.PUSH_URL }}
+          VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
+          # The morning run (GitHub schedule, or the Worker's dispatch with official=true) builds the official report.
+          # Any other run (push, manual) also adds tonight's live part, otherwise a push during a game night would
+          # wipe the "En direct" panel until the next live run.
+          OFFICIAL: ${{ github.event_name == 'schedule' || inputs.official == true }}
+        run: python -m pool build --out site --classic site/classique $([ "$OFFICIAL" = "true" ] && echo --official || echo --live)
 
       - name: Keep downloaded games for next time
         if: always()

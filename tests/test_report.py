@@ -312,6 +312,13 @@ def test_build_writes_new_main_page_classic_fallback_and_redirect(tmp_path):
     stamp = json.loads((out / "version.json").read_text(encoding="utf-8"))["build"]
     assert json.loads((out / "data.json").read_text(encoding="utf-8"))["meta"]["build"] == stamp
     assert "version.json" in page and "checkVersion" in page
+    v = json.loads((out / "version.json").read_text(encoding="utf-8"))
+    assert v["day"] == "2026-10-28" and v["live"] is False and v["missing"] == 0
+    # notifications: service worker shipped (no fetch handler = no cache), panel off without the repo variables
+    sw = (out / "sw.js").read_text(encoding="utf-8")
+    assert "showNotification" in sw and "'fetch'" not in sw
+    assert "__CONNECT__" not in page and "connect-src 'self'; worker-src 'self'" in page and '"push"' not in page
+    assert 'id="stale"' in page and json.loads((out / "data.json").read_text(encoding="utf-8"))["meta"]["reportDay"] == "2026-10-28"
     # the morning build has no live part, only the marker that stops late live runs
     assert json.loads((out / "live.json").read_text(encoding="utf-8")) == {"sig": None, "day": None, "morning": "2026-10-28"}
     live = tmp_path / "live"
@@ -342,3 +349,21 @@ def test_failed_boxscore_does_not_crash_the_build():
     fails = []
     lines, games = collect(Flaky(load_roster(os.path.join(os.path.dirname(__file__), '..', 'roster.json')), date(2026, 10, 28)), date(2026, 10, 20), date(2026, 10, 21), failures=fails)
     assert fails and all(not v for v in lines.values())
+
+
+def test_push_config_only_accepts_plain_values(monkeypatch):
+    from pool.__main__ import push_config
+    key = "B" + "x" * 86
+    monkeypatch.setenv("PUSH_URL", "https://pool-lnh.exemple.workers.dev/")
+    monkeypatch.setenv("VAPID_PUBLIC_KEY", key)
+    assert push_config() == {"url": "https://pool-lnh.exemple.workers.dev", "key": key}
+    for bad in ("http://pool.workers.dev", "https://x.dev; script-src *", "https://x.dev/path", ""):
+        monkeypatch.setenv("PUSH_URL", bad)          # goes into the page CSP: anything odd is refused
+        assert push_config() is None
+
+
+def test_official_build_wins_over_live(tmp_path):
+    from pool.__main__ import main
+    assert main(["build", "--demo", "--live", "--official", "--today", "2026-10-28",
+                 "--roster", os.path.join(ROOT, "roster.json"), "--out", str(tmp_path)]) == 0
+    assert json.loads((tmp_path / "live.json").read_text(encoding="utf-8"))["morning"] == "2026-10-28"
