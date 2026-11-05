@@ -304,7 +304,7 @@ def test_build_writes_new_main_page_classic_fallback_and_redirect(tmp_path):
         assert (d / "fonts" / "barlow-400.woff2").exists()
     manifest = json.loads((out / "manifest.webmanifest").read_text(encoding="utf-8"))
     assert manifest["display"] == "standalone" and manifest["start_url"] == "./"
-    for icon in {i["src"] for i in manifest["icons"]} | {"apple-touch-icon.png"}:
+    for icon in {i["src"].split("?")[0] for i in manifest["icons"]} | {"apple-touch-icon.png"}:
         assert (out / icon).read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
     page = (out / "index.html").read_text(encoding="utf-8")
     assert 'rel="manifest" href="manifest.webmanifest"' in page and "manifest-src 'self'" in page
@@ -367,3 +367,16 @@ def test_official_build_wins_over_live(tmp_path):
     assert main(["build", "--demo", "--live", "--official", "--today", "2026-10-28",
                  "--roster", os.path.join(ROOT, "roster.json"), "--out", str(tmp_path)]) == 0
     assert json.loads((tmp_path / "live.json").read_text(encoding="utf-8"))["morning"] == "2026-10-28"
+
+
+def test_notification_badge_is_transparent(tmp_path):
+    # Android draws the small notification icon from its transparency only: an opaque badge = a white square
+    import zlib
+    from pool.render import copy_static
+    copy_static(str(tmp_path))
+    b = (tmp_path / "badge-96.png").read_bytes()
+    assert b[:8] == b"\x89PNG\r\n\x1a\n" and b[25] == 6                    # colour type 6 = RGBA
+    raw = zlib.decompress(b[b.index(b"IDAT") + 4:b.index(b"IEND") - 8])
+    alphas = {raw[y * (96 * 4 + 1) + 1 + x * 4 + 3] for y in range(96) for x in range(96)}
+    assert 0 in alphas and 255 in alphas                                    # see-through background, solid shape
+    assert "badge-96.png" in (tmp_path / "sw.js").read_text(encoding="utf-8")
