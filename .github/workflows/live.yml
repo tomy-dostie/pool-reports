@@ -1,13 +1,11 @@
 # En direct : during game nights, rebuilds the page with tonight's points so far (provisional).
-# Every 15 min a quick check reads the NHL scoreboard; the page is rebuilt and deployed only when something
-# changed (a goal, a period, a game starting or ending) since the live.json currently online.
+# Started by the Cloudflare Worker (worker/) when the NHL scoreboard changed (GitHub's own schedule was too
+# throttled to rely on). A quick check still compares with the live.json online; the page is rebuilt and deployed
+# only when something changed (a goal, a period, a game starting or ending).
 # Actions are pinned to exact commits (same versions as daily.yml).
 name: En direct
 
 on:
-  schedule:
-    - cron: "*/15 16-23 * * *"   # 11 h to 18 h 45 in Toronto (winter time): afternoon and early games
-    - cron: "*/15 0-6 * * *"     # 19 h to 1 h 45: the evening games
   workflow_dispatch:
 
 permissions: {}

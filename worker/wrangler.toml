@@ -9,7 +9,7 @@ crons = ["* * * * *"]          # every minute; src/index.js decides what to do f
 
 [[kv_namespaces]]
 binding = "KV"
-id = "REMPLACER_PAR_ID_KV"     # printed by: npx wrangler kv namespace create pool-lnh
+id = "7af9238b3a0c45d78f1b37ce327c22e1"     # printed by: npx wrangler kv namespace create pool-lnh
 
 [vars]
 REPO = "tomy-dostie/pool-reports"
@@ -17,4 +17,4 @@ SITE = "https://tomy-dostie.github.io/pool-reports/"
 ORIGIN = "https://tomy-dostie.github.io"
 POOLERS = "tomy,vinny,gab,vallee,flo,yves,rej,charlene,denis,jeff"
 VAPID_SUBJECT = "https://tomy-dostie.github.io/pool-reports/"
-VAPID_PUBLIC = "REMPLACER_PAR_CLE_PUBLIQUE"   # printed by: node scripts/vapid.mjs
+VAPID_PUBLIC = "BBRaBoDxHVv5ACrf1FsKuF1hVzTRbG6e_YgobXg6fIPa1BI9yIKc1Pr_h4J4LJEElHX1cNwnlFPpsMuqa9fST_0"   # printed by: node scripts/vapid.mjs
