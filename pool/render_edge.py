@@ -17,6 +17,7 @@ TEMPLATE = r"""<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'__CONNECT__; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
+<meta name="text-scale" content="scale">
 <meta name="theme-color" content="#0A0D12">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png?v=2">
@@ -49,7 +50,7 @@ html,body{height:100%;overflow:hidden}
 .opt{display:flex;align-items:center;gap:12px;text-align:left;min-height:48px;padding:8px 0;width:100%}
 .opt .box{flex:none;width:26px;height:26px;border-radius:7px;border:2px solid var(--line);display:grid;place-items:center;font-weight:800;color:var(--ink)}
 .opt[aria-pressed="true"] .box{background:var(--accent);border-color:var(--accent)}
-.opt .small{display:block}
+.opt .small{display:block}.opt>span:last-child{min-width:0}.opt .nm{white-space:normal}
 .demo{background:var(--warm);color:var(--ink);font:700 13px 'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase;text-align:center;border-radius:8px;padding:5px 8px}
 .card{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .card.in{animation:in .18s ease-out}@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -61,8 +62,14 @@ html,body{height:100%;overflow:hidden}
 .tabs button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tabs button[aria-current=page]{color:var(--accent)}
 .tabs button[aria-current=page]::before{content:'';position:absolute;top:0;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}
+.tabs[hidden]{display:none}
+/* big text (body zoomed): keep the essentials on narrow rows */
+.zoomed .brx,.zoomed .top .when{display:none}
+.zoomed .tabs button{font-size:11px}
+.zoomed h1{font-size:27px}.zoomed .welcome h1{font-size:30px}
+.zoomed .lb{grid-template-columns:28px minmax(0,1fr) auto}.zoomed .lb .track{display:none}
 .tabs .badge{position:absolute;top:9px;left:calc(50% + 8px);width:9px;height:9px;border-radius:50%;background:var(--live);box-shadow:0 0 0 2px #0D1117;animation:blink 1.4s ease-in-out infinite}
-h1{margin:0;font:800 34px/.95 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.01em}
+h1{margin:0;font:800 34px/.95 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.01em;overflow-wrap:break-word;hyphens:auto}
 h2{margin:8px 0 0;font:700 15px 'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .sub{margin:0;font-size:15px;line-height:1.45;color:var(--muted)}
 .small{font-size:14px;line-height:1.35;color:var(--muted)}
@@ -81,11 +88,11 @@ h2{margin:8px 0 0;font:700 15px 'Barlow Condensed',sans-serif;letter-spacing:.1e
 .btn:active{background:var(--panel2)}
 .btn.main{background:var(--accent);border-color:transparent;color:var(--ink)}
 .btn.hot{background:var(--live);border-color:transparent;color:var(--ink)}
-.date{display:flex;align-items:flex-end;gap:12px}.date .d{font-size:84px;line-height:.8}.date .m{font:800 28px/.9 'Barlow Condensed',sans-serif;text-transform:uppercase;color:var(--accent)}
+.date{display:flex;flex-wrap:wrap;align-items:flex-end;gap:4px 12px}.date .d{font-size:84px;line-height:.8}.date .m{font:800 28px/.9 'Barlow Condensed',sans-serif;text-transform:uppercase;color:var(--accent)}
 .lead{padding:14px 16px;display:flex;flex-direction:column;gap:8px;border-left:3px solid var(--accent)}
 .lead .t{font:800 26px/1.05 'Barlow Condensed',sans-serif;text-transform:uppercase}.lead p{margin:0;font-size:16px;line-height:1.45}
 .kick{font:700 14px 'Barlow Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:8px}   /* 2 columns, 1 with big text */
 .tile{padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .tile .l{font:700 13px 'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .tile .v{font-size:38px;line-height:1}.tile .r{font-size:14px;color:var(--muted)}.tile .r b{color:var(--text);font-weight:600}
@@ -97,8 +104,9 @@ h2{margin:8px 0 0;font:700 15px 'Barlow Condensed',sans-serif;letter-spacing:.1e
 .chip{flex:none;min-height:44px;padding:0 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-size:16px;font-weight:600}
 .chip:active{background:var(--panel2)}
 .chip[aria-pressed=true]{color:var(--ink);border-color:transparent}
-.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
-.seg button{min-height:42px;border-radius:9px;text-align:center;font:700 14px 'Barlow Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(max-content,1fr);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px;overflow-x:auto;scrollbar-width:none;min-width:0;max-width:100%}
+.seg::-webkit-scrollbar{display:none}
+.seg button{min-height:42px;padding:0 10px;border-radius:9px;text-align:center;font:700 14px 'Barlow Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .seg button[aria-pressed=true]{background:var(--accent);color:var(--ink)}
 .subtabs{position:sticky;top:0;z-index:3;background:var(--bg);padding:4px 0 6px}
 .lb{display:grid;grid-template-columns:28px minmax(0,1fr) 72px 46px;align-items:center;gap:10px;padding:10px 12px}
@@ -114,7 +122,7 @@ h2{margin:8px 0 0;font:700 15px 'Barlow Condensed',sans-serif;letter-spacing:.1e
 .ini.sm{width:42px;height:42px;border-radius:10px;font-size:19px}
 .hero .nm{font:800 28px/1 'Barlow Condensed',sans-serif;text-transform:uppercase}
 .chart{padding:10px 8px 6px}.chart svg{display:block;width:100%;height:auto}
-.duel{display:grid;grid-template-columns:minmax(0,1fr) 104px minmax(0,1fr);gap:8px;align-items:center;padding:11px 12px}
+.duel{display:grid;grid-template-columns:minmax(max-content,1fr) minmax(0,104px) minmax(max-content,1fr);gap:8px;align-items:center;padding:11px 12px}
 .duel .a{text-align:right}.duel .mid{text-align:center;font:700 13px 'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .duel .num{font-size:28px}.duel .win{color:var(--accent)}
 .mvr{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;padding:11px 12px;align-items:baseline}.mvr b{font:700 15px 'Barlow Condensed',sans-serif;text-transform:uppercase;color:var(--muted)}
@@ -149,8 +157,16 @@ h2{margin:8px 0 0;font:700 15px 'Barlow Condensed',sans-serif;letter-spacing:.1e
 .picks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .pick{display:flex;align-items:center;gap:12px;padding:10px 12px;min-height:66px;border-radius:14px;background:var(--panel);border:1.5px solid var(--line)}
 .pick:active{background:var(--panel2)}@media (hover:hover){.pick:hover{background:var(--panel2)}}.pick[aria-pressed=true]{border-color:var(--accent)}
+.aa{grid-column:3;min-width:48px;min-height:44px;padding:0 10px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);font:800 20px/1 'Barlow Condensed',sans-serif;text-align:center}
+.aa[aria-pressed=true]{background:var(--accent);color:var(--ink);border-color:transparent}
+.top .when{grid-column:2}
+.dots{display:flex;gap:6px}.dots i{width:28px;height:5px;border-radius:3px;background:var(--line)}.dots i.on{background:var(--accent)}
+.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;counter-reset:st}
+.steps li{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start;font-size:17px;line-height:1.4}
+.steps li::before{counter-increment:st;content:counter(st);width:36px;height:36px;border-radius:50%;background:var(--accent);color:var(--ink);display:grid;place-items:center;font:800 20px 'Barlow Condensed',sans-serif}
+.steps b{color:var(--accent)}
 .pick .nm{font-size:18px}.pick .small{font-size:13px}
-.toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:min(92vw,480px);background:var(--accent);color:var(--ink);font-weight:700;font-size:16px;padding:12px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:10;text-align:center}
+.toast{position:fixed;left:16px;right:16px;margin:0 auto;width:fit-content;bottom:calc(76px + env(safe-area-inset-bottom));max-width:480px;background:var(--accent);color:var(--ink);font-weight:700;font-size:16px;padding:12px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:10;text-align:center}
 </style>
 </head>
 <body>
@@ -255,19 +271,86 @@ window.DATA = __DATA__;
     });
     return g;
   }
+  // First visit: 1. T'es qui ?  2. the app on the home screen  3. notifications. Each step can be skipped ("Plus tard").
+  // "Pas toi ? Changer" (firstRun false) only shows step 1.
+  var firstRun = false, wstep = 'nom';
+  var android = /Android/i.test(navigator.userAgent || '');
+  function needInstall() { return !standalone && !M.demo && (!!installEvt || ios || android); }
+  function needNotif() { return pushOk() && Notification.permission === 'default' && !load('pool.push'); }
+  function wSteps() { return ['nom'].concat(needInstall() ? ['app'] : [], needNotif() ? ['notif'] : []); }
+  function wNext() {
+    var all = wSteps(), i = all.indexOf(wstep);
+    if (firstRun && i >= 0 && i < all.length - 1) { wstep = all[i + 1]; render(); return; }
+    wDone();
+  }
+  function wDone() {
+    var from = route.from || 'accueil';
+    firstRun = false;
+    wstep = 'nom';
+    if (route.depth > 0) goBack(); else nav({ tab: from }, false);
+  }
+  function wHead(s, title) {
+    var all = wSteps(), i = all.indexOf(wstep), d = el('div', 'dots');
+    if (firstRun && all.length > 1) {
+      all.forEach(function (x, k) { d.appendChild(el('i', k <= i ? 'on' : null)); });
+      add(s, d, el('div', 'kick', 'Étape ' + (i + 1) + ' de ' + all.length));
+    }
+    return add(s, el('h1', null, title));
+  }
+  function later(label, fn) { var b = el('button', 'link', (label || 'Plus tard') + ' ›'); b.onclick = fn || wNext; return b; }
   function welcome() {
     var s = el('div', 'welcome');
-    add(s, el('div', 'kick', 'Bienvenue dans le pool'), el('h1', null, 'T’es qui ?'),
+    if (wstep === 'app' && firstRun) {
+      wHead(s, 'Mets le pool sur ton écran d’accueil');
+      add(s, el('p', 'sub', 'Comme ça, t’as une icône sur ton téléphone pis ça s’ouvre en plein écran, comme une vraie app.'));
+      var ol = el('ol', 'steps');
+      function li(parts) { var l = el('li'), sp = el('span'); parts.forEach(function (x, k) { sp.appendChild(k % 2 ? el('b', null, x) : txt(x)); }); l.appendChild(sp); ol.appendChild(l); }
+      if (installEvt) {
+        var b = el('button', 'btn main', 'Installer l’app');
+        b.onclick = function () {
+          var e = installEvt; installEvt = null; e.prompt();
+          (e.userChoice || Promise.resolve()).then(function () { wNext(); }, function () { wNext(); });
+        };
+        return add(s, b, later());
+      }
+      if (ios) {
+        li(['Touche le bouton ', 'Partager', ' (le carré avec une flèche vers le haut). Sur les iPhone récents, il est parfois dans le menu ', '« ··· »', '.']);
+        li(['Descends pis touche ', '« Sur l’écran d’accueil »', '.']);
+        li(['Touche ', '« Ajouter »', ' en haut à droite.']);
+        li(['Ferme Safari pis ouvre le pool avec la ', 'nouvelle icône', ' (les bâtons croisés).']);
+      } else {
+        li(['Touche le menu ', '⋮', ' en haut à droite de Chrome.']);
+        li(['Touche ', '« Ajouter à l’écran d’accueil »', ' (ou « Installer l’app »).']);
+        li(['Confirme avec ', '« Installer »', ', pis ouvre le pool avec la nouvelle icône.']);
+      }
+      var ok = el('button', 'btn main', 'C’est fait'); ok.onclick = wNext;
+      return add(s, ol, ok, later());
+    }
+    if (wstep === 'notif' && firstRun) {
+      wHead(s, 'Veux-tu un petit message le matin ?');
+      add(s, el('p', 'sub', 'Une notification vers 7 h : ton rang, tes points d’hier, pis si quelqu’un t’a dépassé. Pas plus. Tu peux arrêter quand tu veux dans Moi.'));
+      var go = el('button', 'btn main', pushBusy ? 'Un instant…' : !swReg ? 'Préparation…' : 'Oui, m’avertir');
+      go.disabled = pushBusy || !swReg;
+      go.onclick = function () { pushOn(['matin', 'depasse'], wDone); };
+      return add(s, go, later('Non merci', wDone));
+    }
+    wHead(s, 'T’es qui ?');
+    add(s, el('div', 'kick', 'Bienvenue dans le pool'),
       el('p', 'sub', 'Choisis ton nom une fois pis la page va s’ouvrir sur ton équipe, avec ce qui a changé depuis ta dernière visite. Pas de compte, rien est envoyé : c’est gardé dans ton téléphone.'),
       picker(function (id) {
-        setMe(id); var from = route.from || 'accueil';
-        toast('Salut ' + byId(id).name + ' ! La page va s’ouvrir sur ton équipe.');
-        if (route.depth > 0) goBack(); else nav({ tab: from }, false);
+        setMe(id);
+        toast('Salut ' + byId(id).name + ' !');
+        wNext();
       }));
+    var bt = el('button', 'opt'), on = getRaw('pool.big') === '1';
+    bt.setAttribute('aria-pressed', on ? 'true' : 'false');
+    add(bt, el('span', 'box', on ? '✓' : ''), add(el('span'), el('span', 'nm', 'Gros texte'), el('span', 'small', 'Tout plus gros dans la page. Le bouton Aa en haut fait pareil.')));
+    bt.onclick = function () { setBig(!on); render(true); };
     var spec = el('button', 'link', 'Je regarde juste ›');
-    spec.onclick = function () { spectator = true; setRaw('pool.spectator', '1'); if (route.depth > 0) goBack(); else nav({ tab: 'accueil' }, false); };
-    return add(s, spec);
+    spec.onclick = function () { spectator = true; setRaw('pool.spectator', '1'); firstRun = false; wDone(); };
+    return add(s, bt, spec);
   }
+
 
   // ---------------------------------------------------------------- "since your last visit" (snapshot kept on the phone)
   // base = what you saw before the latest results; it stays the same all day so the panel does not vanish on reload.
@@ -417,10 +500,15 @@ window.DATA = __DATA__;
       return pushCall('/abonner', { sub: sub.toJSON(), pooler: me, types: types }).then(function () { save('pool.push', { types: types, id: me }); });
     });
   }
-  function pushDone(msg) { pushBusy = false; if (msg) toast(msg); if (route.tab === 'moi' && !route.screen) render(true); }
-  function pushOn(types) {
+  var pushThen = null;
+  function pushDone(msg) {
+    pushBusy = false; if (msg) toast(msg);
+    var then = pushThen; pushThen = null;
+    if (then) then(); else if (route.tab === 'moi' && !route.screen || route.screen === 'qui') render(true);
+  }
+  function pushOn(types, then) {
     if (!swReg || pushBusy) return;
-    pushBusy = true;
+    pushBusy = true; pushThen = then || null;
     // subscribe() is called right inside the tap: iPhone only shows the permission prompt during a user gesture
     swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(PUSH.key) })
       .then(function () { return pushSync(types); })
@@ -444,7 +532,7 @@ window.DATA = __DATA__;
         var st = load('pool.push');
         if (!sub && st) setRaw('pool.push', null);                                    // permission removed in the settings
         else if (sub && st && known && st.id !== me) pushSync(st.types).catch(function () {});   // name changed: follow it
-        if (route.tab === 'moi' && !route.screen) render(true);
+        if (route.tab === 'moi' && !route.screen || route.screen === 'qui') render(true);
       });
     }).catch(function () {});
   }
@@ -892,7 +980,7 @@ window.DATA = __DATA__;
   function drawTop() {
     var top = document.getElementById('top'); top.textContent = '';
     if (!route.screen || route.screen === 'qui' && !route.depth) {
-      add(top, add(el('span', 'brand'), txt('Pool '), el('b', null, 'LNH'), txt(' · Analyse')), el('span', 'when', M.weekday + ' ' + M.dayNumber));
+      add(top, add(el('span', 'brand'), txt('Pool '), el('b', null, 'LNH'), el('span', 'brx', ' · Analyse')), el('span', 'when', M.weekday + ' ' + M.dayNumber), bigButton());
       return;
     }
     var back = el('button', 'back', '‹ Retour'); back.onclick = goBack; back.setAttribute('aria-label', 'Retour');
@@ -946,7 +1034,8 @@ window.DATA = __DATA__;
   me = known ? want : ids[0];
   spectator = getRaw('pool.spectator') === '1';
   route = parse(location.hash);
-  if (!known && !spectator && !route.screen) route = { tab: route.tab, screen: 'qui', from: route.tab };
+  firstRun = !known && !spectator;
+  if (firstRun && !route.screen) route = { tab: route.tab, screen: 'qui', from: route.tab };
   route.depth = 0;
   try { history.replaceState(route, '', hashOf(route)); } catch (e) {}
   window.addEventListener && window.addEventListener('popstate', function (e) {
@@ -980,6 +1069,44 @@ window.DATA = __DATA__;
   window.addEventListener && window.addEventListener('focus', function () { checkVersion(true); });
   setInterval(function () { checkVersion(false); }, 120000);
   checkVersion(true);
+  // ---------------------------------------------------------------- text size
+  // Phone setting: iPhone "Taille du texte" (Dynamic Type, read through -apple-system-body, 17 px by default) or
+  // Android's font size (font-size:medium, 16 px by default, with <meta name="text-scale">). Never smaller than
+  // the design, at most x1.6. "Gros texte" (pool.big) adds x1.2. The whole page is zoomed, so the layout, the buttons
+  // and the tap targets grow with the text and nothing gets cut.
+  function textScale() {
+    var s = 1;
+    try {
+      var p = el('div'), apple = !!(window.CSS && CSS.supports && CSS.supports('font', '-apple-system-body'));
+      p.style.cssText = 'position:absolute;visibility:hidden;font-size:medium';
+      if (apple) p.style.font = '-apple-system-body';
+      document.documentElement.appendChild(p);
+      s = parseFloat(getComputedStyle(p).fontSize) / (apple ? 17 : 16);
+      p.parentNode.removeChild(p);
+    } catch (e) {}
+    if (!(s > 0)) s = 1;
+    // capped at x1.35 in all: past that, the standings rows of a 390 px phone no longer have room for the names
+    s = Math.min(1.35, Math.min(1.3, Math.max(1, s)) * (getRaw('pool.big') === '1' ? 1.2 : 1));
+    s = Math.round(s * 100) / 100;
+    document.body.style.zoom = s === 1 ? '' : String(s);
+    document.body.classList.toggle('zoomed', s > 1.1);       // simpler header and rows (CSS .zoomed)
+    return s;
+  }
+  function setBig(on) {
+    setRaw('pool.big', on ? '1' : null);
+    textScale();
+    toast(on ? 'Gros texte activé.' : 'Texte normal.');
+  }
+  function bigButton() {
+    var b = el('button', 'aa', 'Aa'), on = getRaw('pool.big') === '1';
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.setAttribute('aria-label', 'Gros texte');
+    b.title = 'Gros texte';
+    b.onclick = function () { setBig(!on); render(true); };
+    return b;
+  }
+  textScale();
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') textScale(); });
   document.getElementById('demo').hidden = !M.demo;
   updateStale(); document.addEventListener('visibilitychange', updateStale); setInterval(updateStale, 300000);
   render();

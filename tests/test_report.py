@@ -319,6 +319,9 @@ def test_build_writes_new_main_page_classic_fallback_and_redirect(tmp_path):
     assert "showNotification" in sw and "'fetch'" not in sw
     assert "__CONNECT__" not in page and "connect-src 'self'; worker-src 'self'" in page and '"push"' not in page
     assert 'id="stale"' in page and json.loads((out / "data.json").read_text(encoding="utf-8"))["meta"]["reportDay"] == "2026-10-28"
+    # big text: phone text size (Dynamic Type / text-scale) x "Gros texte" (Aa), first-visit steps, hidden tab bar
+    assert 'name="text-scale" content="scale"' in page and "-apple-system-body" in page and "pool.big" in page
+    assert "Étape " in page and "Sur l’écran d’accueil" in page and ".tabs[hidden]{display:none}" in page
     # the morning build has no live part, only the marker that stops late live runs
     assert json.loads((out / "live.json").read_text(encoding="utf-8")) == {"sig": None, "day": None, "morning": "2026-10-28"}
     live = tmp_path / "live"
