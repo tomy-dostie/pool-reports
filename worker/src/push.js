@@ -76,7 +76,7 @@ export async function sendPush(sub, message, env) {
       'Content-Encoding': 'aes128gcm',
       'Content-Type': 'application/octet-stream',
       TTL: '43200',
-      Urgency: 'normal',
+      Urgency: 'high',                    // 'normal' lets Android (Doze) and iPhone hold it until the phone wakes up
     },
     body,
   });

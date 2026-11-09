@@ -102,13 +102,26 @@ async function live(env, now) {
   if (!js) return;
   const sig = await signature(nightGames(js, night));
   if (!sig) return;                                                    // no game started yet
+  // GitHub Pages ignores ?t= and serves live.json from its cache for up to 10 min, so the online copy can be
+  // old right after a deploy. The Worker remembers the scoreboard it last asked a build for (KV liveRun) and only
+  // re-asks for the same scoreboard when the online copy still differs once that cache has surely expired
+  // (a box score missing at build time, "-incomplet"), at most twice.
   const online = await getJson(`${env.SITE}live.json`);
   if (online && (online.morning || '') > night) return;                // that night is already official
   if (online && online.sig === sig && online.day === night) return;    // page already up to date
-  const last = Number(await env.KV.get('liveAt')) || 0;
-  if (Date.now() - last < 3 * 60e3) return;                            // a run is probably still going
+  const run = (await env.KV.get('liveRun', 'json')) || {};
+  if (!shouldRun(run, sig, night, Date.now())) return;
   await dispatch(env, 'live.yml');
-  await env.KV.put('liveAt', String(Date.now()));
+  const again = run.sig === sig && run.night === night;
+  await env.KV.put('liveRun', JSON.stringify({ sig, night, at: Date.now(), n: again ? (run.n || 1) + 1 : 1 }),
+    { expirationTtl: 2 * 86400 });
+}
+
+/** Live build needed? run = last dispatch {sig, night, at, n}. New scoreboard: yes (3 min apart); same: retry later. */
+export function shouldRun(run, sig, night, now) {
+  if (now - (run.at || 0) < 3 * 60e3) return false;                    // a run is probably still going
+  if (run.sig !== sig || run.night !== night) return true;             // something happened since the last build
+  return now - run.at >= 12 * 60e3 && (run.n || 1) < 3;                // online copy still old after the cache: retry
 }
 
 // ------------------------------------------------------------------ subscriptions
